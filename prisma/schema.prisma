@@ -1,0 +1,142 @@
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Org {
+  id        String      @id @default(cuid())
+  name      String
+  slug      String      @unique
+  createdAt DateTime    @default(now())
+  members   OrgMember[]
+  forms     Form[]
+  invites   Invite[]
+}
+
+model OrgMember {
+  id     String @id @default(cuid())
+  org    Org    @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  orgId  String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String
+  role   Role   @default(MEMBER)
+
+  @@unique([orgId, userId])
+}
+
+enum Role {
+  OWNER
+  MEMBER
+}
+
+model User {
+  id       String      @id @default(cuid())
+  email    String      @unique
+  name     String?
+  image    String?
+  orgs     OrgMember[]
+  accounts Account[]
+  sessions Session[]
+}
+
+model Form {
+  id          String       @id @default(cuid())
+  org         Org          @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  orgId       String
+  title       String       @default("Untitled form")
+  slug        String       @unique
+  published   Boolean      @default(false)
+  successMsg  String?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  fields      Field[]
+  submissions Submission[]
+}
+
+model Field {
+  id          String        @id @default(cuid())
+  form        Form          @relation(fields: [formId], references: [id], onDelete: Cascade)
+  formId      String
+  type        FieldType
+  label       String
+  placeholder String?
+  required    Boolean       @default(false)
+  order       Int
+  options     Json?         // for dropdown: string[]
+  answers     FieldAnswer[]
+}
+
+enum FieldType {
+  TEXT
+  EMAIL
+  LONG_TEXT
+  DROPDOWN
+  RATING
+  FILE
+}
+
+model Submission {
+  id        String        @id @default(cuid())
+  form      Form          @relation(fields: [formId], references: [id], onDelete: Cascade)
+  formId    String
+  createdAt DateTime      @default(now())
+  answers   FieldAnswer[]
+}
+
+model FieldAnswer {
+  id           String     @id @default(cuid())
+  submission   Submission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+  submissionId String
+  field        Field      @relation(fields: [fieldId], references: [id], onDelete: Cascade)
+  fieldId      String
+  value        String
+}
+
+model Invite {
+  id        String   @id @default(cuid())
+  org       Org      @relation(fields: [orgId], references: [id], onDelete: Cascade)
+  orgId     String
+  email     String
+  token     String   @unique @default(cuid())
+  expiresAt DateTime
+  accepted  Boolean  @default(false)
+}
+
+// Auth.js required models
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
