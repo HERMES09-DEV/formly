@@ -67,6 +67,7 @@ model Field {
   required    Boolean       @default(false)
   order       Int
   options     Json?         // for dropdown: string[]
+  condition   Json?         // { triggerFieldId: string, triggerValue: string }
   answers     FieldAnswer[]
 }
 
