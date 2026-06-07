@@ -2,7 +2,10 @@
 
 import type { Field } from "@prisma/client";
 import {
+  AlertCircle,
+  CheckCircle2,
   ChevronLeft,
+  Clock3,
   ExternalLink,
   Globe,
   Loader2,
@@ -38,6 +41,15 @@ interface FormBuilderProps {
   embedBaseUrl: string;
 }
 
+type FormSaveStatus = "Saving..." | "Saved" | "Could not save";
+
+function formatSavedTime(value: Date) {
+  return new Intl.DateTimeFormat("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+  }).format(value);
+}
+
 export function FormBuilder({
   form,
   initialFields,
@@ -51,7 +63,8 @@ export function FormBuilder({
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [isMobileEditorOpen, setIsMobileEditorOpen] = useState(false);
   const [titleDraft, setTitleDraft] = useState(form.title);
-  const [formStatus, setFormStatus] = useState<string | null>(null);
+  const [formStatus, setFormStatus] = useState<FormSaveStatus | null>(null);
+  const [lastSavedAt, setLastSavedAt] = useState<Date | null>(null);
   const [isPending, startTransition] = useTransition();
   const selectedField =
     fieldState.find((field) => field.id === selectedFieldId) ?? null;
@@ -83,6 +96,7 @@ export function FormBuilder({
           }));
           setTitleDraft(updatedForm.title);
           setFormStatus("Saved");
+          setLastSavedAt(new Date());
         })
         .catch((error: unknown) => {
           setFormState((currentForm) => ({
@@ -113,6 +127,7 @@ export function FormBuilder({
             published: updatedForm.published,
           }));
           setFormStatus("Saved");
+          setLastSavedAt(new Date());
           if (updatedForm.published) {
             toast.success("Form published");
           } else {
@@ -147,7 +162,7 @@ export function FormBuilder({
   }
 
   return (
-    <div className="space-y-6">
+    <div className="animate-moduleIn space-y-6">
       <div className="flex flex-col items-start justify-between gap-4 border-b border-slate-200 bg-slate-50 pb-5 dark:border-gray-700 dark:bg-gray-950 lg:flex-row lg:items-center">
         <div className="min-w-0 max-w-full">
           <Link
@@ -174,28 +189,50 @@ export function FormBuilder({
                     setIsEditingTitle(false);
                   }
                 }}
-                className="h-11 w-full max-w-xl border-0 border-b-2 border-transparent bg-transparent px-0 text-lg font-medium text-slate-950 outline-none transition focus:border-blue-500 dark:text-gray-100"
+                className="h-11 w-full max-w-xl border-0 border-b-2 border-blue-500 bg-transparent px-2 text-lg font-medium text-slate-950 outline-none transition-colors dark:text-gray-100"
               />
             ) : (
               <button
                 type="button"
                 onClick={() => setIsEditingTitle(true)}
-                className="min-w-0 text-left"
+                aria-label="Edit form title"
+                title="Edit form title"
+                className="group -ml-2 inline-flex min-w-0 max-w-full items-center gap-2 rounded-md px-2 py-1.5 text-left transition-all duration-200 hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-slate-950 focus:ring-offset-2 dark:hover:bg-gray-800 dark:focus:ring-gray-200 dark:focus:ring-offset-gray-950"
               >
                 <h1 className="truncate text-lg font-medium text-slate-950 dark:text-gray-100">
                   {formState.title}
                 </h1>
+                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md border border-slate-200 bg-white text-slate-500 shadow-sm transition-all duration-200 group-hover:border-blue-300 group-hover:text-blue-600 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-400 dark:group-hover:border-blue-700 dark:group-hover:text-blue-300">
+                  <Pencil aria-hidden="true" className="h-3.5 w-3.5" />
+                </span>
               </button>
             )}
             {formStatus ? (
-              <span className="inline-flex shrink-0 items-center gap-1.5 text-sm text-slate-500 dark:text-gray-400">
+              <span className="inline-flex shrink-0 items-center gap-1.5 text-xs font-medium text-slate-500 dark:text-gray-400">
                 {formStatus === "Saving..." ? (
                   <Loader2
                     aria-hidden="true"
                     className="h-3.5 w-3.5 animate-spin"
                   />
+                ) : formStatus === "Saved" ? (
+                  <CheckCircle2
+                    aria-hidden="true"
+                    className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400"
+                  />
+                ) : (
+                  <AlertCircle
+                    aria-hidden="true"
+                    className="h-3.5 w-3.5 text-red-600 dark:text-red-400"
+                  />
+                )}
+                <span>{formStatus}</span>
+                {formStatus === "Saved" && lastSavedAt ? (
+                  <span className="inline-flex items-center gap-1 text-slate-400 dark:text-gray-500">
+                    <span aria-hidden="true">·</span>
+                    <Clock3 aria-hidden="true" className="h-3 w-3" />
+                    {formatSavedTime(lastSavedAt)}
+                  </span>
                 ) : null}
-                {formStatus}
               </span>
             ) : null}
           </div>

@@ -4,6 +4,7 @@ import type { Field } from "@prisma/client";
 import {
   AlertCircle,
   CheckCircle2,
+  Clock3,
   Info,
   Loader2,
   Plus,
@@ -32,6 +33,13 @@ interface FieldEditorProps {
 }
 
 type SaveStatus = "Saving..." | "Saved" | "Could not save";
+
+function formatSavedTime(value: Date) {
+  return new Intl.DateTimeFormat("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+  }).format(value);
+}
 
 function isTextLikeField(field: Field) {
   return (
@@ -71,6 +79,7 @@ export function FieldEditor({ field, fields, onUpdate }: FieldEditorProps) {
     field ? getFieldCondition(field.condition) !== null : false,
   );
   const [status, setStatus] = useState<SaveStatus>("Saved");
+  const [lastSavedAt, setLastSavedAt] = useState<Date | null>(null);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pendingUpdateRef = useRef<EditableFieldUpdate | null>(null);
   const saveIdRef = useRef(0);
@@ -114,6 +123,7 @@ export function FieldEditor({ field, fields, onUpdate }: FieldEditorProps) {
               !timerRef.current
             ) {
               setStatus("Saved");
+              setLastSavedAt(new Date());
             }
           })
           .catch(() => {
@@ -245,7 +255,14 @@ export function FieldEditor({ field, fields, onUpdate }: FieldEditorProps) {
               className="h-3.5 w-3.5 text-red-600 dark:text-red-400"
             />
           )}
-          {status}
+          <span>{status}</span>
+          {status === "Saved" && lastSavedAt ? (
+            <span className="inline-flex items-center gap-1 text-slate-400 dark:text-gray-500">
+              <span aria-hidden="true">·</span>
+              <Clock3 aria-hidden="true" className="h-3 w-3" />
+              {formatSavedTime(lastSavedAt)}
+            </span>
+          ) : null}
         </span>
       </div>
 

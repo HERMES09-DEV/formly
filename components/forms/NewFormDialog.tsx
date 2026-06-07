@@ -58,8 +58,8 @@ export function NewFormDialog() {
       {isOpen ? (
         <div className="animate-overlayIn fixed inset-0 z-50 flex items-center justify-center bg-slate-950/45 px-4 backdrop-blur-[2px]">
           <div className="animate-scaleIn w-full max-w-md rounded-lg border border-slate-200 bg-white p-6 shadow-2xl dark:border-gray-700 dark:bg-gray-900">
-            <div className="flex items-start justify-between gap-4">
-              <div>
+            <div className="relative text-center">
+              <div className="px-10">
                 <h2 className="text-lg font-semibold text-slate-950 dark:text-gray-100">
                   New form
                 </h2>
@@ -73,13 +73,16 @@ export function NewFormDialog() {
                 aria-label="Close"
                 title="Close"
                 onClick={closeDialog}
-                className="h-9 w-9 px-0"
+                className="absolute -right-1 -top-1 h-9 w-9 px-0"
               >
                 <X aria-hidden="true" className="h-4 w-4" />
               </Button>
             </div>
 
-            <form onSubmit={handleSubmit} className="mt-5 space-y-4">
+            <form
+              onSubmit={handleSubmit}
+              className="mx-auto mt-6 max-w-sm space-y-4"
+            >
               <div className="space-y-2">
                 <label htmlFor="form-title" className="text-sm font-medium">
                   Title
@@ -98,7 +101,7 @@ export function NewFormDialog() {
                 />
               </div>
 
-              <div className="flex justify-end gap-2">
+              <div className="flex justify-end gap-2 pt-1">
                 <Button
                   variant="secondary"
                   disabled={isPending}

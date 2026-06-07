@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { Sidebar } from "@/components/ui/Sidebar";
+import { PageTransition } from "@/components/ui/page-transition";
 import { prisma } from "@/lib/prisma";
 
 interface DashboardLayoutProps {
@@ -43,8 +44,8 @@ export default async function DashboardLayout({
           image: session.user.image,
         }}
       />
-      <main className="animate-pageIn min-h-screen px-4 pb-24 pt-6 sm:px-6 md:px-8 md:pt-20 lg:ml-60 lg:py-8">
-        {children}
+      <main className="min-h-screen px-4 pb-24 pt-6 sm:px-6 md:px-8 md:pt-20 lg:ml-60 lg:py-8">
+        <PageTransition>{children}</PageTransition>
       </main>
     </div>
   );

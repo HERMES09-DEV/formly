@@ -83,7 +83,7 @@ export function FieldItem({
     <div ref={setNodeRef} style={style}>
       <div
         className={cn(
-          "flex min-h-14 items-center gap-3 rounded-md border bg-white px-3 py-2 shadow-sm transition-shadow duration-150 hover:shadow-sm dark:bg-gray-900",
+          "animate-moduleIn flex min-h-14 items-center gap-3 rounded-md border bg-white px-3 py-2 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md dark:bg-gray-900",
           isSelected
             ? "border-blue-500 ring-2 ring-blue-500 ring-offset-1 dark:ring-offset-gray-900"
             : "border-slate-200 dark:border-gray-700",

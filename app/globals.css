@@ -19,6 +19,12 @@
     @apply min-h-screen bg-slate-50 text-slate-950 antialiased dark:bg-gray-950 dark:text-gray-100;
   }
 
+  h1,
+  h2,
+  h3 {
+    @apply font-display;
+  }
+
   button,
   a,
   input,
@@ -45,6 +51,34 @@
   }
 }
 
+@keyframes routeIn {
+  from {
+    opacity: 0;
+    filter: blur(3px);
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    filter: blur(0);
+    transform: translateY(0);
+  }
+}
+
+@keyframes moduleIn {
+  0% {
+    opacity: 0;
+    transform: translateY(-16px) scale(0.95);
+  }
+  68% {
+    opacity: 1;
+    transform: translateY(2px) scale(1.012);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
 @keyframes fadeUp {
   from {
     opacity: 0;
@@ -58,6 +92,14 @@
 
 .animate-pageIn {
   animation: pageIn 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.animate-routeIn {
+  animation: routeIn 0.42s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.animate-moduleIn {
+  animation: moduleIn 0.52s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 .animate-fadeUp {
@@ -152,7 +194,7 @@
 
 .animate-stagger > * {
   opacity: 0;
-  animation: fadeUp 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: moduleIn 0.52s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 .animate-stagger > *:nth-child(2) {
@@ -187,6 +229,8 @@
   }
 
   .animate-pageIn,
+  .animate-routeIn,
+  .animate-moduleIn,
   .animate-fadeUp,
   .animate-fadeIn,
   .animate-overlayIn,
