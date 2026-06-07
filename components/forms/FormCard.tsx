@@ -1,6 +1,13 @@
 "use client";
 
-import { Loader2, Pencil, Trash2 } from "lucide-react";
+import {
+  CircleDashed,
+  Globe,
+  Inbox,
+  Loader2,
+  Pencil,
+  Trash2,
+} from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useTransition } from "react";
@@ -52,25 +59,34 @@ export function FormCard({ form }: FormCardProps) {
   }
 
   return (
-    <article className="animate-fadeUp flex min-h-52 transform flex-col rounded-lg border border-slate-200 bg-white p-5 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md dark:border-gray-700 dark:bg-gray-900">
+    <article className="group flex min-h-52 transform flex-col rounded-lg border border-slate-200 bg-white p-5 shadow-sm transition-all duration-300 ease-out hover:-translate-y-1 hover:border-slate-300 hover:shadow-lg dark:border-gray-700 dark:bg-gray-900 dark:hover:border-gray-600">
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0">
           <h2 className="truncate text-lg font-semibold text-slate-950 dark:text-gray-100">
             {form.title}
           </h2>
-          <p className="mt-1 text-sm text-slate-600 dark:text-gray-300">
+          <p className="mt-1 flex items-center gap-1.5 text-sm text-slate-600 dark:text-gray-300">
+            <Inbox
+              aria-hidden="true"
+              className="h-3.5 w-3.5 transition-transform duration-300 group-hover:-translate-y-0.5"
+            />
             {form.submissionCount}{" "}
             {form.submissionCount === 1 ? "submission" : "submissions"}
           </p>
         </div>
         <span
           className={cn(
-            "inline-flex shrink-0 items-center rounded-full px-2.5 py-1 text-xs font-medium",
+            "inline-flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium transition-transform duration-300 group-hover:scale-[1.03]",
             form.published
               ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300"
               : "bg-slate-100 text-slate-600 dark:bg-gray-800 dark:text-gray-300",
           )}
         >
+          {form.published ? (
+            <Globe aria-hidden="true" className="h-3 w-3" />
+          ) : (
+            <CircleDashed aria-hidden="true" className="h-3 w-3" />
+          )}
           {form.published ? "Published" : "Draft"}
         </span>
       </div>

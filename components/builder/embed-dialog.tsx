@@ -45,12 +45,12 @@ export function EmbedDialog({ baseUrl, slug }: EmbedDialogProps) {
       </Button>
 
       {isOpen ? (
-        <div className="animate-fadeIn fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 px-4 py-6">
+        <div className="animate-overlayIn fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 px-4 py-6 backdrop-blur-[2px]">
           <section
             aria-modal="true"
             role="dialog"
             aria-labelledby="embed-dialog-title"
-            className="w-full max-w-xl rounded-lg border border-slate-200 bg-white p-5 shadow-xl dark:border-gray-700 dark:bg-gray-900"
+            className="animate-scaleIn w-full max-w-xl rounded-lg border border-slate-200 bg-white p-5 shadow-2xl dark:border-gray-700 dark:bg-gray-900"
           >
             <div className="flex items-start justify-between gap-4">
               <div>

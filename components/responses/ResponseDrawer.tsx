@@ -47,7 +47,7 @@ export function ResponseDrawer({
   const answerMap = getAnswerMap(submission);
 
   return (
-    <aside className="fixed inset-y-0 right-0 z-50 flex w-full max-w-md flex-col border-l border-slate-200 bg-white shadow-xl dark:border-gray-700 dark:bg-gray-900">
+    <aside className="animate-slideInRight fixed inset-y-0 right-0 z-50 flex w-full max-w-md flex-col border-l border-slate-200 bg-white shadow-2xl dark:border-gray-700 dark:bg-gray-900">
       <div className="flex items-start justify-between gap-4 border-b border-slate-200 px-5 py-4 dark:border-gray-700">
         <div>
           <h2 className="text-lg font-semibold text-slate-950 dark:text-gray-100">

@@ -283,8 +283,8 @@ export function FormBuilder({
       ) : null}
 
       {isMobileEditorOpen ? (
-        <div className="fixed inset-0 z-50 bg-slate-950/40 md:hidden">
-          <div className="absolute inset-x-0 bottom-0 max-h-[82vh] overflow-y-auto rounded-t-2xl border border-slate-200 bg-white p-4 shadow-xl dark:border-gray-700 dark:bg-gray-900">
+        <div className="animate-overlayIn fixed inset-0 z-50 bg-slate-950/45 backdrop-blur-[2px] md:hidden">
+          <div className="animate-slideUp absolute inset-x-0 bottom-0 max-h-[82vh] overflow-y-auto rounded-t-2xl border border-slate-200 bg-white p-4 shadow-2xl dark:border-gray-700 dark:bg-gray-900">
             <div className="mb-3 flex justify-end">
               <Button
                 variant="ghost"

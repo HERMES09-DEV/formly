@@ -56,8 +56,8 @@ export function NewFormDialog() {
       </Button>
 
       {isOpen ? (
-        <div className="animate-fadeIn fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 px-4">
-          <div className="w-full max-w-md rounded-lg border border-slate-200 bg-white p-6 shadow-lg dark:border-gray-700 dark:bg-gray-900">
+        <div className="animate-overlayIn fixed inset-0 z-50 flex items-center justify-center bg-slate-950/45 px-4 backdrop-blur-[2px]">
+          <div className="animate-scaleIn w-full max-w-md rounded-lg border border-slate-200 bg-white p-6 shadow-2xl dark:border-gray-700 dark:bg-gray-900">
             <div className="flex items-start justify-between gap-4">
               <div>
                 <h2 className="text-lg font-semibold text-slate-950 dark:text-gray-100">

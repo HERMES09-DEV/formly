@@ -2,10 +2,53 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer base {
+  :root {
+    color-scheme: light;
+  }
+
+  :root.dark {
+    color-scheme: dark;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply min-h-screen bg-slate-50 text-slate-950 antialiased dark:bg-gray-950 dark:text-gray-100;
+  }
+
+  button,
+  a,
+  input,
+  select,
+  textarea {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  ::selection {
+    @apply bg-blue-200 text-slate-950 dark:bg-blue-800 dark:text-white;
+  }
+}
+
+@keyframes pageIn {
+  from {
+    opacity: 0;
+    filter: blur(4px);
+    transform: translateY(10px) scale(0.997);
+  }
+  to {
+    opacity: 1;
+    filter: blur(0);
+    transform: translateY(0) scale(1);
+  }
+}
+
 @keyframes fadeUp {
   from {
     opacity: 0;
-    transform: translateY(12px);
+    transform: translateY(10px);
   }
   to {
     opacity: 1;
@@ -13,8 +56,12 @@
   }
 }
 
+.animate-pageIn {
+  animation: pageIn 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
 .animate-fadeUp {
-  animation: fadeUp 0.3s ease-out forwards;
+  animation: fadeUp 0.42s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 @keyframes fadeIn {
@@ -27,5 +74,135 @@
 }
 
 .animate-fadeIn {
-  animation: fadeIn 0.25s ease-out forwards;
+  animation: fadeIn 0.25s ease-out both;
+}
+
+@keyframes overlayIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(28px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(28px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-overlayIn {
+  animation: overlayIn 0.2s ease-out both;
+}
+
+.animate-scaleIn {
+  animation: scaleIn 0.32s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.animate-slideInLeft {
+  animation: slideInLeft 0.35s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.animate-slideInRight {
+  animation: slideInRight 0.38s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.animate-slideUp {
+  animation: slideUp 0.38s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.animate-stagger > * {
+  opacity: 0;
+  animation: fadeUp 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.animate-stagger > *:nth-child(2) {
+  animation-delay: 45ms;
+}
+
+.animate-stagger > *:nth-child(3) {
+  animation-delay: 90ms;
+}
+
+.animate-stagger > *:nth-child(4) {
+  animation-delay: 135ms;
+}
+
+.animate-stagger > *:nth-child(5) {
+  animation-delay: 180ms;
+}
+
+.animate-stagger > *:nth-child(n + 6) {
+  animation-delay: 225ms;
+}
+
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 0.28s;
+  animation-timing-function: ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  .animate-pageIn,
+  .animate-fadeUp,
+  .animate-fadeIn,
+  .animate-overlayIn,
+  .animate-scaleIn,
+  .animate-slideInLeft,
+  .animate-slideInRight,
+  .animate-slideUp,
+  .animate-stagger > * {
+    animation: none;
+    opacity: 1;
+    filter: none;
+    transform: none;
+  }
+
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation-duration: 0.01ms;
+  }
 }

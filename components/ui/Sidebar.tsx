@@ -1,9 +1,15 @@
 "use client";
 
 import {
+  BadgeCheck,
+  ChevronRight,
+  GitFork,
+  KeyRound,
   LayoutList,
   LogOut,
   Menu,
+  PanelsTopLeft,
+  Search,
   Settings,
   X,
   type LucideIcon,
@@ -22,7 +28,7 @@ interface SidebarUser {
 }
 
 interface SidebarProps {
-  orgId: string;
+  signInProvider: string | null;
   user: SidebarUser;
 }
 
@@ -54,6 +60,27 @@ function getUserDisplayName(user: SidebarUser) {
   return user.name ?? user.email ?? "User";
 }
 
+function getProviderDetails(provider: string | null) {
+  if (provider === "github") {
+    return {
+      label: "GitHub",
+      icon: GitFork,
+    };
+  }
+
+  if (provider === "google") {
+    return {
+      label: "Google",
+      icon: Search,
+    };
+  }
+
+  return {
+    label: "Secure account",
+    icon: KeyRound,
+  };
+}
+
 function SignOutButton({ compact = false }: { compact?: boolean }) {
   return (
     <button
@@ -62,38 +89,46 @@ function SignOutButton({ compact = false }: { compact?: boolean }) {
         void signOut({ callbackUrl: "/login" });
       }}
       className={cn(
-        "inline-flex items-center justify-center rounded-md font-medium transition-all duration-150 active:scale-95 focus:outline-none focus:ring-2 focus:ring-slate-950 focus:ring-offset-2 dark:focus:ring-gray-200 dark:focus:ring-offset-gray-900",
+        "group inline-flex items-center justify-center rounded-md font-medium transition-all duration-200 ease-out active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-slate-950 focus:ring-offset-2 dark:focus:ring-gray-200 dark:focus:ring-offset-gray-900",
         compact
-          ? "h-14 flex-1 flex-col gap-1 text-xs text-slate-600 hover:bg-slate-100 hover:text-slate-950 dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-gray-100"
-          : "h-9 w-full border border-slate-300 bg-white px-3 text-sm text-slate-950 hover:bg-slate-100 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:hover:bg-gray-800",
+          ? "relative h-14 flex-1 flex-col gap-1 text-xs text-slate-600 hover:bg-slate-100 hover:text-slate-950 dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-gray-100"
+          : "h-10 w-full gap-2 border border-slate-200 bg-white px-3 text-sm text-slate-700 hover:-translate-y-px hover:border-slate-300 hover:bg-slate-50 hover:text-slate-950 hover:shadow-sm dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200 dark:hover:border-gray-600 dark:hover:bg-gray-800 dark:hover:text-gray-100",
       )}
     >
-      <LogOut aria-hidden="true" className="h-4 w-4" />
-      <span>{compact ? "Sign out" : "Sign out"}</span>
+      <LogOut
+        aria-hidden="true"
+        className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-0.5"
+      />
+      <span>Sign out</span>
     </button>
   );
 }
 
 function SidebarContent({
-  orgId,
+  signInProvider,
   user,
   onNavigate,
 }: SidebarProps & { onNavigate?: () => void }) {
   const pathname = usePathname();
+  const provider = getProviderDetails(signInProvider);
+  const ProviderIcon = provider.icon;
 
   return (
     <>
-      <div className="flex h-16 items-center border-b border-slate-200 px-5 dark:border-gray-700">
+      <div className="flex h-16 items-center border-b border-slate-200/80 px-4 dark:border-gray-800">
         <Link
           href="/dashboard"
           onClick={onNavigate}
-          className="text-xl font-bold tracking-tight text-slate-950 dark:text-gray-100"
+          className="group flex items-center gap-2.5 rounded-md px-1 py-1 text-slate-950 dark:text-gray-100"
         >
-          Formly
+          <span className="flex h-8 w-8 items-center justify-center rounded-md bg-slate-950 text-white shadow-sm transition-transform duration-300 ease-out group-hover:-rotate-3 group-hover:scale-105 dark:bg-gray-100 dark:text-gray-950">
+            <PanelsTopLeft aria-hidden="true" className="h-4 w-4" />
+          </span>
+          <span className="text-lg font-bold">Formly</span>
         </Link>
       </div>
 
-      <nav className="flex-1 space-y-1 px-3 py-4">
+      <nav className="flex-1 space-y-1.5 px-3 py-4">
         {navItems.map((item) => {
           const Icon = item.icon;
           const isActive =
@@ -105,29 +140,51 @@ function SidebarContent({
               href={item.href}
               onClick={onNavigate}
               className={cn(
-                "flex h-10 items-center gap-2.5 rounded-md border-l-2 border-transparent px-3 text-sm font-medium text-slate-600 transition-colors duration-150 hover:bg-slate-100 hover:text-slate-950 dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-gray-100",
+                "group relative flex h-11 items-center gap-3 overflow-hidden rounded-md px-3 text-sm font-medium text-slate-600 transition-all duration-200 ease-out hover:translate-x-0.5 hover:bg-slate-100 hover:text-slate-950 dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-gray-100",
                 isActive &&
-                  "border-blue-500 bg-slate-950 text-white hover:bg-slate-950 hover:text-white dark:bg-gray-100 dark:text-gray-950 dark:hover:bg-gray-100 dark:hover:text-gray-950",
+                  "bg-slate-100 text-slate-950 shadow-sm ring-1 ring-inset ring-slate-200 hover:translate-x-0 dark:bg-gray-800 dark:text-gray-100 dark:ring-gray-700",
               )}
             >
-              <Icon aria-hidden="true" className="h-4 w-4" />
-              <span>{item.label}</span>
+              <span
+                className={cn(
+                  "absolute inset-y-2 left-0 w-0.5 origin-center scale-y-0 rounded-full bg-blue-500 transition-transform duration-300",
+                  isActive && "scale-y-100",
+                )}
+              />
+              <Icon
+                aria-hidden="true"
+                className="h-4 w-4 transition-transform duration-200 ease-out group-hover:scale-110"
+              />
+              <span className="flex-1">{item.label}</span>
+              <ChevronRight
+                aria-hidden="true"
+                className={cn(
+                  "h-3.5 w-3.5 -translate-x-1 opacity-0 transition-all duration-200",
+                  isActive && "translate-x-0 opacity-60",
+                )}
+              />
             </Link>
           );
         })}
       </nav>
 
-      <div className="space-y-3 border-t border-slate-200 px-4 pb-4 pt-3 dark:border-gray-700">
-        <div className="flex items-center gap-3">
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-slate-950 text-sm font-semibold text-white dark:bg-gray-100 dark:text-gray-950">
-            {getUserInitial(user)}
+      <div className="space-y-2.5 border-t border-slate-200/80 px-3 pb-3 pt-3 dark:border-gray-800">
+        <div className="group flex items-center gap-3 rounded-md border border-slate-200 bg-slate-50 p-3 transition-all duration-200 hover:border-slate-300 hover:bg-white hover:shadow-sm dark:border-gray-700 dark:bg-gray-800/70 dark:hover:border-gray-600 dark:hover:bg-gray-800">
+          <div className="relative">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-slate-950 text-sm font-semibold text-white ring-2 ring-white transition-transform duration-300 group-hover:scale-105 dark:bg-gray-100 dark:text-gray-950 dark:ring-gray-800">
+              {getUserInitial(user)}
+            </div>
+            <span className="absolute -bottom-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-emerald-500 text-white ring-2 ring-slate-50 dark:ring-gray-800">
+              <BadgeCheck aria-hidden="true" className="h-2.5 w-2.5" />
+            </span>
           </div>
-          <div className="min-w-0">
+          <div className="min-w-0 flex-1">
             <p className="truncate text-sm font-medium text-slate-950 dark:text-gray-100">
               {getUserDisplayName(user)}
             </p>
-            <p className="truncate text-xs text-slate-500 dark:text-gray-400">
-              {orgId}
+            <p className="mt-0.5 flex items-center gap-1.5 truncate text-xs text-slate-500 dark:text-gray-400">
+              <ProviderIcon aria-hidden="true" className="h-3 w-3 shrink-0" />
+              <span className="truncate">{provider.label}</span>
             </p>
           </div>
         </div>
@@ -153,11 +210,21 @@ function MobileBottomNav() {
             key={item.href}
             href={item.href}
             className={cn(
-              "flex h-14 flex-1 flex-col items-center justify-center gap-1 rounded-md text-xs font-medium text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-950 dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-gray-100",
-              isActive && "text-slate-950 dark:text-gray-100",
+              "group relative flex h-14 flex-1 flex-col items-center justify-center gap-1 rounded-md text-xs font-medium text-slate-600 transition-all duration-200 hover:bg-slate-100 hover:text-slate-950 dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-gray-100",
+              isActive &&
+                "bg-slate-100 text-slate-950 dark:bg-gray-800 dark:text-gray-100",
             )}
           >
-            <Icon aria-hidden="true" className="h-4 w-4" />
+            <span
+              className={cn(
+                "absolute top-0 h-0.5 w-5 scale-x-0 rounded-full bg-blue-500 transition-transform duration-300",
+                isActive && "scale-x-100",
+              )}
+            />
+            <Icon
+              aria-hidden="true"
+              className="h-4 w-4 transition-transform duration-200 group-hover:-translate-y-0.5"
+            />
             <span>{item.label}</span>
           </Link>
         );
@@ -167,7 +234,7 @@ function MobileBottomNav() {
   );
 }
 
-export function Sidebar({ orgId, user }: SidebarProps) {
+export function Sidebar({ signInProvider, user }: SidebarProps) {
   const [isTabletOpen, setIsTabletOpen] = useState(false);
 
   return (
@@ -176,24 +243,24 @@ export function Sidebar({ orgId, user }: SidebarProps) {
         type="button"
         aria-label="Open navigation"
         onClick={() => setIsTabletOpen(true)}
-        className="fixed left-4 top-4 z-40 hidden h-11 w-11 items-center justify-center rounded-md border border-slate-300 bg-white text-slate-700 shadow-sm transition-colors hover:bg-slate-100 hover:text-slate-950 focus:outline-none focus:ring-2 focus:ring-slate-950 focus:ring-offset-2 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200 dark:hover:bg-gray-800 dark:hover:text-gray-100 dark:focus:ring-gray-200 dark:focus:ring-offset-gray-950 md:flex lg:hidden"
+        className="fixed left-4 top-4 z-40 hidden h-11 w-11 items-center justify-center rounded-md border border-slate-200 bg-white/90 text-slate-700 shadow-sm backdrop-blur transition-all duration-200 hover:-translate-y-px hover:border-slate-300 hover:bg-white hover:text-slate-950 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-slate-950 focus:ring-offset-2 dark:border-gray-700 dark:bg-gray-900/90 dark:text-gray-200 dark:hover:border-gray-600 dark:hover:bg-gray-900 dark:hover:text-gray-100 dark:focus:ring-gray-200 dark:focus:ring-offset-gray-950 md:flex lg:hidden"
       >
         <Menu aria-hidden="true" className="h-4 w-4" />
       </button>
 
       {isTabletOpen ? (
-        <div className="fixed inset-0 z-50 hidden bg-slate-950/40 md:block lg:hidden">
-          <aside className="flex h-full w-72 flex-col border-r border-slate-200 bg-white dark:border-gray-700 dark:bg-gray-900">
+        <div className="animate-overlayIn fixed inset-0 z-50 hidden bg-slate-950/45 backdrop-blur-[2px] md:block lg:hidden">
+          <aside className="animate-slideInLeft flex h-full w-72 flex-col border-r border-slate-200 bg-white shadow-2xl dark:border-gray-700 dark:bg-gray-900">
             <button
               type="button"
               aria-label="Close navigation"
               onClick={() => setIsTabletOpen(false)}
-              className="absolute left-[18rem] top-4 flex h-10 w-10 items-center justify-center rounded-md border border-slate-300 bg-white text-slate-700 shadow-sm transition-colors hover:bg-slate-100 hover:text-slate-950 focus:outline-none focus:ring-2 focus:ring-slate-950 focus:ring-offset-2 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200 dark:hover:bg-gray-800 dark:hover:text-gray-100 dark:focus:ring-gray-200 dark:focus:ring-offset-gray-950"
+              className="absolute left-[18rem] top-4 flex h-10 w-10 items-center justify-center rounded-md border border-slate-200 bg-white text-slate-700 shadow-md transition-all duration-200 hover:rotate-90 hover:bg-slate-100 hover:text-slate-950 focus:outline-none focus:ring-2 focus:ring-slate-950 focus:ring-offset-2 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200 dark:hover:bg-gray-800 dark:hover:text-gray-100 dark:focus:ring-gray-200 dark:focus:ring-offset-gray-950"
             >
               <X aria-hidden="true" className="h-4 w-4" />
             </button>
             <SidebarContent
-              orgId={orgId}
+              signInProvider={signInProvider}
               user={user}
               onNavigate={() => setIsTabletOpen(false)}
             />
@@ -201,8 +268,8 @@ export function Sidebar({ orgId, user }: SidebarProps) {
         </div>
       ) : null}
 
-      <aside className="fixed inset-y-0 left-0 hidden w-60 flex-col border-r border-slate-200 bg-white dark:border-gray-700 dark:bg-gray-900 lg:flex">
-        <SidebarContent orgId={orgId} user={user} />
+      <aside className="fixed inset-y-0 left-0 z-30 hidden w-60 flex-col border-r border-slate-200/80 bg-white shadow-[8px_0_30px_-24px_rgba(15,23,42,0.35)] dark:border-gray-800 dark:bg-gray-900 lg:flex">
+        <SidebarContent signInProvider={signInProvider} user={user} />
       </aside>
 
       <MobileBottomNav />
