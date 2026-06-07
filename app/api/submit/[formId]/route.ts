@@ -296,46 +296,30 @@ function validateSubmission(fields: SubmitField[], formData: FormData) {
   };
 }
 
-function sanitizeFileName(name: string) {
-  return (
-    name
-      .trim()
-      .toLowerCase()
-      .replace(/[^a-z0-9._-]+/g, "-")
-      .replace(/^-+|-+$/g, "")
-      .slice(0, 120) || "upload"
-  );
-}
+async function uploadFileAnswer(file: File) {
+  const token = process.env.BLOB_READ_WRITE_TOKEN;
 
-async function uploadFileAnswer(
-  formId: string,
-  fieldId: string,
-  file: File,
-) {
-  if (!process.env.BLOB_READ_WRITE_TOKEN) {
+  if (!token) {
     return file.name;
   }
 
-  const pathname = [
-    "formly",
-    "submissions",
-    formId,
-    fieldId,
-    `${Date.now()}-${sanitizeFileName(file.name)}`,
-  ].join("/");
-  const blob = await put(pathname, file, {
-    access: "public",
-    addRandomSuffix: true,
-    contentType: file.type || undefined,
-  });
+  let answerValue = "";
 
-  return blob.url;
+  try {
+    const blob = await put(file.name, file, {
+      access: "public",
+      token,
+    });
+    answerValue = blob.url;
+  } catch (blobError) {
+    console.error("Blob upload failed:", blobError);
+    answerValue = `[File: ${file.name}]`;
+  }
+
+  return answerValue;
 }
 
-async function resolveAnswerValues(
-  formId: string,
-  pendingAnswers: PendingAnswer[],
-) {
+async function resolveAnswerValues(pendingAnswers: PendingAnswer[]) {
   const answers: { fieldId: string; value: string }[] = [];
 
   for (const answer of pendingAnswers) {
@@ -347,7 +331,7 @@ async function resolveAnswerValues(
     } else {
       answers.push({
         fieldId: answer.fieldId,
-        value: await uploadFileAnswer(formId, answer.fieldId, answer.file),
+        value: await uploadFileAnswer(answer.file),
       });
     }
   }
@@ -459,7 +443,7 @@ export async function POST(request: NextRequest, context: SubmitRouteContext) {
       );
     }
 
-    const answers = await resolveAnswerValues(form.id, pendingAnswers);
+    const answers = await resolveAnswerValues(pendingAnswers);
 
     await prisma.$transaction(async (tx) => {
       await tx.submission.create({
