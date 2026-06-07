@@ -1,4 +1,4 @@
-# Formly — Multi-tenant SaaS form builder
+# Formly — Multi-organization form builder
 
 [![Live Demo](https://img.shields.io/badge/live%20demo-formly--workspace.vercel.app-black?style=for-the-badge&logo=vercel)](https://formly-workspace.vercel.app)
 [![GitHub](https://img.shields.io/badge/GitHub-HERMES09--DEV%2Fformly-181717?style=for-the-badge&logo=github)](https://github.com/HERMES09-DEV/formly)
@@ -12,7 +12,7 @@
 ![Auth.js](https://img.shields.io/badge/Auth.js-v5-000000?style=flat-square)
 ![Vercel](https://img.shields.io/badge/Vercel-deployed-000000?style=flat-square&logo=vercel)
 
-A self-hostable, multi-tenant form builder for teams. Build forms with a drag-and-drop editor, share a public link, collect responses, and view analytics — all scoped per organization.
+A self-hostable, form builder for teams. Build forms with a drag-and-drop editor, share a public link, collect responses, and view analytics — all scoped per organization.
 
 ---
 
