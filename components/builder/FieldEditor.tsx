@@ -4,6 +4,7 @@ import type { Field } from "@prisma/client";
 import {
   AlertCircle,
   CheckCircle2,
+  Info,
   Loader2,
   Plus,
   Trash2,
@@ -65,6 +66,9 @@ export function FieldEditor({ field, fields, onUpdate }: FieldEditorProps) {
   const [options, setOptions] = useState(field ? getStringOptions(field) : []);
   const [condition, setCondition] = useState<FieldCondition | null>(
     field ? getFieldCondition(field.condition) : null,
+  );
+  const [isConditionEnabled, setIsConditionEnabled] = useState(
+    field ? getFieldCondition(field.condition) !== null : false,
   );
   const [status, setStatus] = useState<SaveStatus>("Saved");
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -178,7 +182,7 @@ export function FieldEditor({ field, fields, onUpdate }: FieldEditorProps) {
 
     updateCondition({
       triggerFieldId,
-      triggerValue: condition?.triggerValue ?? "",
+      triggerValue: "",
     });
   }
 
@@ -193,11 +197,33 @@ export function FieldEditor({ field, fields, onUpdate }: FieldEditorProps) {
     });
   }
 
+  function toggleCondition(nextEnabled: boolean) {
+    setIsConditionEnabled(nextEnabled);
+
+    if (!nextEnabled) {
+      updateCondition(null);
+    }
+  }
+
+  function removeCondition() {
+    setIsConditionEnabled(false);
+    updateCondition(null);
+  }
+
   const conditionTriggerFields = fields.filter(
     (candidateField) =>
       candidateField.id !== activeField.id &&
       isConditionTriggerField(candidateField),
   );
+  const selectedTriggerField = conditionTriggerFields.find(
+    (candidateField) => candidateField.id === condition?.triggerFieldId,
+  );
+  const triggerValues =
+    selectedTriggerField?.type === "DROPDOWN"
+      ? getStringOptions(selectedTriggerField)
+      : selectedTriggerField?.type === "RATING"
+        ? ["1", "2", "3", "4", "5"]
+        : [];
 
   return (
     <aside className="w-full shrink-0 rounded-lg border border-slate-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-gray-900 xl:w-80">
@@ -317,53 +343,92 @@ export function FieldEditor({ field, fields, onUpdate }: FieldEditorProps) {
         ) : null}
 
         <div className="border-t border-slate-200 pt-5 dark:border-gray-700">
-          <h3 className="text-sm font-medium text-slate-950 dark:text-gray-100">
-            Conditional logic
-          </h3>
-          <div className="mt-3 space-y-3">
-            <div className="space-y-2">
-              <label
-                htmlFor="field-condition-trigger"
-                className="text-sm font-medium text-slate-700 dark:text-gray-300"
-              >
-                Show this field only if
-              </label>
-              <select
-                id="field-condition-trigger"
-                value={condition?.triggerFieldId ?? ""}
-                disabled={conditionTriggerFields.length === 0}
-                onChange={(event) =>
-                  updateConditionTrigger(event.target.value)
-                }
-                className="h-11 w-full rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-950 outline-none transition-colors disabled:cursor-not-allowed disabled:bg-slate-100 focus:border-slate-950 focus:ring-2 focus:ring-slate-950/10 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:disabled:bg-gray-800 dark:focus:border-gray-300 dark:focus:ring-gray-200/20"
-              >
-                <option value="">Always show</option>
-                {conditionTriggerFields.map((triggerField) => (
-                  <option key={triggerField.id} value={triggerField.id}>
-                    {triggerField.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="space-y-2">
-              <label
-                htmlFor="field-condition-value"
-                className="text-sm font-medium text-slate-700 dark:text-gray-300"
-              >
-                equals
-              </label>
+          <div className="flex items-center justify-between gap-3">
+            <h3 className="text-sm font-medium text-slate-950 dark:text-gray-100">
+              Show this field only when...
+            </h3>
+            <label className="relative inline-flex cursor-pointer items-center">
               <input
-                id="field-condition-value"
-                value={condition?.triggerValue ?? ""}
-                disabled={!condition}
-                onChange={(event) =>
-                  updateConditionValue(event.target.value)
-                }
-                className="h-11 w-full rounded-md border border-slate-300 bg-white px-3 text-sm text-slate-950 outline-none transition-colors disabled:cursor-not-allowed disabled:bg-slate-100 focus:border-slate-950 focus:ring-2 focus:ring-slate-950/10 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:disabled:bg-gray-800 dark:focus:border-gray-300 dark:focus:ring-gray-200/20"
+                type="checkbox"
+                checked={isConditionEnabled}
+                onChange={(event) => toggleCondition(event.target.checked)}
+                className="peer sr-only"
               />
-            </div>
+              <span className="h-6 w-11 rounded-full bg-slate-300 transition-colors duration-200 peer-checked:bg-blue-600 peer-focus-visible:ring-2 peer-focus-visible:ring-blue-500 peer-focus-visible:ring-offset-2 dark:bg-gray-700 dark:peer-focus-visible:ring-offset-gray-900" />
+              <span className="pointer-events-none absolute left-1 top-1 h-4 w-4 rounded-full bg-white transition-transform duration-200 peer-checked:translate-x-5" />
+            </label>
           </div>
+
+          {isConditionEnabled ? (
+            <div className="mt-4">
+              <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-gray-300">
+                <select
+                  id="field-condition-trigger"
+                  value={condition?.triggerFieldId ?? ""}
+                  disabled={conditionTriggerFields.length === 0}
+                  onChange={(event) =>
+                    updateConditionTrigger(event.target.value)
+                  }
+                  className="h-11 min-w-0 flex-1 rounded-md border border-slate-300 bg-white px-2 text-sm text-slate-950 outline-none transition-colors disabled:cursor-not-allowed disabled:bg-slate-100 focus:border-slate-950 focus:ring-2 focus:ring-slate-950/10 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:disabled:bg-gray-800 dark:focus:border-gray-300 dark:focus:ring-gray-200/20"
+                >
+                  <option value="">select a field...</option>
+                  {conditionTriggerFields.map((triggerField) => (
+                    <option key={triggerField.id} value={triggerField.id}>
+                      {triggerField.label}
+                    </option>
+                  ))}
+                </select>
+
+                <span className="shrink-0 text-xs text-slate-400 dark:text-gray-500">
+                  equals
+                </span>
+
+                <select
+                  id="field-condition-value"
+                  value={condition?.triggerValue ?? ""}
+                  disabled={!selectedTriggerField}
+                  onChange={(event) =>
+                    updateConditionValue(event.target.value)
+                  }
+                  className="h-11 min-w-0 flex-1 rounded-md border border-slate-300 bg-white px-2 text-sm text-slate-950 outline-none transition-colors disabled:cursor-not-allowed disabled:bg-slate-100 focus:border-slate-950 focus:ring-2 focus:ring-slate-950/10 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:disabled:bg-gray-800 dark:focus:border-gray-300 dark:focus:ring-gray-200/20"
+                >
+                  <option value="">select a value...</option>
+                  {triggerValues.map((triggerValue) => (
+                    <option key={triggerValue} value={triggerValue}>
+                      {selectedTriggerField?.type === "RATING"
+                        ? `★ ${triggerValue}`
+                        : triggerValue}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {condition?.triggerValue && selectedTriggerField ? (
+                <div className="mt-2 flex items-start gap-2 rounded-lg bg-blue-50 px-3 py-2 text-sm text-blue-700 dark:bg-blue-950 dark:text-blue-300">
+                  <Info
+                    aria-hidden="true"
+                    className="mt-0.5 h-4 w-4 shrink-0"
+                  />
+                  <p>
+                    This field will appear when &quot;
+                    {selectedTriggerField.label}&quot; equals &quot;
+                    {condition.triggerValue}&quot;
+                  </p>
+                </div>
+              ) : null}
+
+              {condition ? (
+                <button
+                  type="button"
+                  onClick={removeCondition}
+                  className="mt-2 flex items-center gap-1 text-xs text-red-500 transition-colors hover:text-red-600"
+                >
+                  <Trash2 aria-hidden="true" className="h-3 w-3" />
+                  Remove condition
+                </button>
+              ) : null}
+            </div>
+          ) : null}
         </div>
       </div>
     </aside>

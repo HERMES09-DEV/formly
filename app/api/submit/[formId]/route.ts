@@ -2,7 +2,6 @@ import { Ratelimit } from "@upstash/ratelimit";
 import { Redis } from "@upstash/redis";
 import { put } from "@vercel/blob";
 import type { FieldType } from "@prisma/client";
-import { z } from "zod";
 import { type NextRequest, NextResponse } from "next/server";
 import {
   type FieldCondition,
@@ -60,8 +59,9 @@ function getRateLimit() {
 
   const url = process.env.UPSTASH_REDIS_REST_URL;
   const token = process.env.UPSTASH_REDIS_REST_TOKEN;
+  const hasUpstash = url?.startsWith("https://") && token;
 
-  if (!url || !token) {
+  if (!hasUpstash) {
     cachedRateLimit = null;
     return cachedRateLimit;
   }
@@ -95,18 +95,6 @@ function getFirstIssueMessage(result: {
   error: { issues: { message: string }[] };
 }) {
   return result.error.issues[0]?.message ?? "Invalid value.";
-}
-
-function getErrorMessage(error: unknown) {
-  if (error instanceof z.ZodError) {
-    return "Invalid submission.";
-  }
-
-  if (error instanceof Error) {
-    return error.message;
-  }
-
-  return "Could not submit this response.";
 }
 
 function validateTextField(field: SubmitField, value: string) {
@@ -221,29 +209,38 @@ function validateFileField(
 }
 
 function getVisibleFields(fields: SubmitField[], formData: FormData) {
-  const visibleFieldIds = new Set<string>();
+  const fieldsById = new Map(fields.map((field) => [field.id, field]));
 
-  return fields.filter((field) => {
+  function isVisible(field: SubmitField, visiting: Set<string>): boolean {
     if (!field.condition) {
-      visibleFieldIds.add(field.id);
       return true;
     }
 
-    if (!visibleFieldIds.has(field.condition.triggerFieldId)) {
+    if (visiting.has(field.id)) {
+      return false;
+    }
+
+    const triggerField = fieldsById.get(field.condition.triggerFieldId);
+
+    if (!triggerField) {
+      return false;
+    }
+
+    const nextVisiting = new Set(visiting);
+    nextVisiting.add(field.id);
+
+    if (!isVisible(triggerField, nextVisiting)) {
       return false;
     }
 
     const triggerValue = getStringEntry(
       formData.get(field.condition.triggerFieldId),
     );
-    const isVisible = triggerValue === field.condition.triggerValue;
 
-    if (isVisible) {
-      visibleFieldIds.add(field.id);
-    }
+    return triggerValue === field.condition.triggerValue;
+  }
 
-    return isVisible;
-  });
+  return fields.filter((field) => isVisible(field, new Set()));
 }
 
 function validateSubmission(fields: SubmitField[], formData: FormData) {
@@ -316,7 +313,7 @@ async function uploadFileAnswer(
   file: File,
 ) {
   if (!process.env.BLOB_READ_WRITE_TOKEN) {
-    throw new Error("File uploads are not configured.");
+    return file.name;
   }
 
   const pathname = [
@@ -335,7 +332,10 @@ async function uploadFileAnswer(
   return blob.url;
 }
 
-async function resolveAnswerValues(formId: string, pendingAnswers: PendingAnswer[]) {
+async function resolveAnswerValues(
+  formId: string,
+  pendingAnswers: PendingAnswer[],
+) {
   const answers: { fieldId: string; value: string }[] = [];
 
   for (const answer of pendingAnswers) {
@@ -476,10 +476,10 @@ export async function POST(request: NextRequest, context: SubmitRouteContext) {
     });
 
     return NextResponse.json({ success: true });
-  } catch (error) {
+  } catch {
     return NextResponse.json(
-      { error: getErrorMessage(error) },
-      { status: 400 },
+      { error: "Submission failed. Please try again." },
+      { status: 500 },
     );
   }
 }

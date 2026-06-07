@@ -14,6 +14,7 @@ import Link from "next/link";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
 import { publishForm, updateForm } from "@/actions/form";
+import { CopyLinkButton } from "@/components/builder/CopyLinkButton";
 import { EmbedDialog } from "@/components/builder/embed-dialog";
 import { FieldEditor } from "@/components/builder/FieldEditor";
 import { FieldList } from "@/components/builder/FieldList";
@@ -242,6 +243,10 @@ export function FormBuilder({
             <ExternalLink aria-hidden="true" className="h-4 w-4" />
             Preview
           </Button>
+          <CopyLinkButton
+            slug={formState.slug}
+            published={formState.published}
+          />
           <EmbedDialog baseUrl={embedBaseUrl} slug={formState.slug} />
           <FormNavTabs formId={formState.id} />
         </div>

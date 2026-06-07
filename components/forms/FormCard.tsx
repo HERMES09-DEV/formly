@@ -1,11 +1,12 @@
 "use client";
 
-import { Link2, Loader2, Pencil, Trash2 } from "lucide-react";
+import { Loader2, Pencil, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useTransition } from "react";
 import { toast } from "sonner";
 import { deleteForm } from "@/actions/form";
+import { CopyLinkButton } from "@/components/builder/CopyLinkButton";
 import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/utils";
 
@@ -32,19 +33,6 @@ function getErrorMessage(error: unknown) {
 export function FormCard({ form }: FormCardProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
-
-  function handleShare() {
-    const shareUrl = `${window.location.origin}/f/${form.slug}`;
-
-    void navigator.clipboard
-      .writeText(shareUrl)
-      .then(() => {
-        toast.success("Link copied to clipboard");
-      })
-      .catch(() => {
-        toast.error("Could not copy link.");
-      });
-  }
 
   function handleDelete() {
     if (!window.confirm(`Delete "${form.title}"?`)) {
@@ -96,10 +84,7 @@ export function FormCard({ form }: FormCardProps) {
             <Pencil aria-hidden="true" className="h-4 w-4" />
             Edit
           </Link>
-          <Button variant="secondary" size="sm" onClick={handleShare}>
-            <Link2 aria-hidden="true" className="h-4 w-4" />
-            Share
-          </Button>
+          <CopyLinkButton slug={form.slug} published={form.published} />
           <Button
             variant="ghost"
             size="sm"

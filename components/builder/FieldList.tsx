@@ -237,6 +237,7 @@ export function FieldList({
                 <FieldItem
                   key={field.id}
                   field={field}
+                  fields={fields}
                   isSelected={selectedFieldId === field.id}
                   onSelect={() => onSelectField(field.id)}
                   onDeleted={handleFieldDeleted}

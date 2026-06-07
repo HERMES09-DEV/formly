@@ -129,11 +129,11 @@ async function sendInviteEmail(email: string, orgName: string, token: string) {
   const inviteUrl = getInviteUrl(token);
   const resend = new Resend(apiKey);
   const result = await resend.emails.send({
-    from: "Formly <onboarding@resend.dev>",
+    from: "Formly <formly@resend.dev>",
     to: email,
     subject: `You've been invited to join ${orgName} on Formly`,
     text: [
-      `You've been invited to join ${orgName} on Formly.`,
+      `You've been invited to join to work with ${orgName} on Formly Workspace.`,
       "",
       `Accept your invite: ${inviteUrl}`,
     ].join("\n"),

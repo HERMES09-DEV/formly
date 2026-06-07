@@ -1,7 +1,7 @@
 "use client";
 
 import type { CSSProperties } from "react";
-import { GripVertical, Loader2, Trash2 } from "lucide-react";
+import { Eye, GripVertical, Loader2, Trash2 } from "lucide-react";
 import { useTransition } from "react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
@@ -9,10 +9,12 @@ import { toast } from "sonner";
 import { deleteField } from "@/actions/field";
 import type { BuilderField } from "@/components/builder/FormBuilder";
 import { Button } from "@/components/ui/Button";
+import { getFieldCondition } from "@/lib/field-condition";
 import { cn } from "@/lib/utils";
 
 interface FieldItemProps {
   field: BuilderField;
+  fields: BuilderField[];
   isSelected: boolean;
   onSelect: () => void;
   onDeleted: (fieldId: string) => void;
@@ -29,6 +31,7 @@ const fieldTypeLabels: Record<BuilderField["type"], string> = {
 
 export function FieldItem({
   field,
+  fields,
   isSelected,
   onSelect,
   onDeleted,
@@ -48,6 +51,13 @@ export function FieldItem({
     transform: CSS.Transform.toString(transform),
     transition,
   };
+  const condition = getFieldCondition(field.condition);
+  const triggerField = condition
+    ? fields.find(
+        (candidateField) =>
+          candidateField.id === condition.triggerFieldId,
+      )
+    : null;
 
   function handleDelete() {
     if (!window.confirm(`Delete "${field.label}"?`)) {
@@ -95,8 +105,22 @@ export function FieldItem({
           onClick={onSelect}
           className="flex min-w-0 flex-1 items-center justify-between gap-3 text-left"
         >
-          <span className="truncate text-sm font-medium text-slate-950 dark:text-gray-100">
-            {field.label}
+          <span className="min-w-0">
+            <span className="block truncate text-sm font-medium text-slate-950 dark:text-gray-100">
+              {field.label}
+            </span>
+            {condition ? (
+              triggerField ? (
+                <span className="mt-0.5 flex items-center gap-1 truncate text-xs text-gray-400">
+                  <Eye aria-hidden="true" className="h-3 w-3 shrink-0" />
+                  Shows when {triggerField.label} = {condition.triggerValue}
+                </span>
+              ) : (
+                <span className="mt-0.5 block truncate text-xs text-amber-500">
+                  ⚠ Condition references a deleted field
+                </span>
+              )
+            ) : null}
           </span>
           <span className="inline-flex shrink-0 items-center rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-600 dark:bg-gray-800 dark:text-gray-300">
             {fieldTypeLabels[field.type]}

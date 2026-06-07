@@ -1,7 +1,7 @@
 import NextAuth, { type NextAuthConfig } from "next-auth";
 import type { Adapter, AdapterUser } from "next-auth/adapters";
 import GitHub from "next-auth/providers/github";
-import Resend from "next-auth/providers/resend";
+import Google from "next-auth/providers/google";
 import type { PrismaClient, User as PrismaUser } from "@prisma/client";
 import { NextResponse } from "next/server";
 
@@ -38,19 +38,22 @@ function getUpdatedOrgId(session: unknown): string | null | undefined {
 }
 
 const githubProvider = GitHub({
-  clientId: process.env.AUTH_GITHUB_ID,
-  clientSecret: process.env.AUTH_GITHUB_SECRET,
+  clientId: process.env.AUTH_GITHUB_ID!,
+  clientSecret: process.env.AUTH_GITHUB_SECRET!,
 });
 
-const resendProvider = Resend({
-  apiKey: process.env.RESEND_API_KEY,
-  from: "Formly <onboarding@resend.dev>",
+const googleProvider = Google({
+  clientId: process.env.AUTH_GOOGLE_ID!,
+  clientSecret: process.env.AUTH_GOOGLE_SECRET!,
 });
 
-const providers = [githubProvider, resendProvider] satisfies NextAuthConfig["providers"];
+const providers = [
+  githubProvider,
+  googleProvider,
+] satisfies NextAuthConfig["providers"];
 
 const middlewareAuthConfig = {
-  providers: [githubProvider],
+  providers,
   session: {
     strategy: "jwt",
   },

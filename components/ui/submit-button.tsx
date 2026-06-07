@@ -1,11 +1,13 @@
 "use client";
 
 import { Loader2 } from "lucide-react";
+import type { ReactNode } from "react";
 import { useFormStatus } from "react-dom";
 import { Button } from "@/components/ui/Button";
 
 interface SubmitButtonProps {
-  children: string;
+  children: ReactNode;
+  pendingLabel?: string;
   className?: string;
   variant?: "primary" | "secondary" | "ghost";
   size?: "sm" | "md" | "lg";
@@ -13,11 +15,15 @@ interface SubmitButtonProps {
 
 export function SubmitButton({
   children,
+  pendingLabel,
   className,
   variant = "primary",
   size = "md",
 }: SubmitButtonProps) {
   const { pending } = useFormStatus();
+  const accessiblePendingLabel =
+    pendingLabel ??
+    (typeof children === "string" ? `${children} in progress` : "Submitting");
 
   return (
     <Button
@@ -26,7 +32,7 @@ export function SubmitButton({
       variant={variant}
       size={size}
       disabled={pending}
-      aria-label={pending ? `${children} in progress` : undefined}
+      aria-label={pending ? accessiblePendingLabel : undefined}
     >
       {pending ? <Loader2 className="h-4 w-4 animate-spin" /> : children}
     </Button>

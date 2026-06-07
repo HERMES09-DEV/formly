@@ -3,8 +3,9 @@
 import type { FieldType } from "@prisma/client";
 import { AlertCircle, Loader2, Star } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { type FormEvent, useState } from "react";
+import { type FormEvent, useEffect, useRef, useState } from "react";
 import type { FieldCondition } from "@/lib/field-condition";
+import { cn } from "@/lib/utils";
 import {
   NonEmptyFileSchema,
   OptionalSubmissionEmailSchema,
@@ -142,7 +143,10 @@ function validateRatingField(field: PublicFormField, value: string) {
   return null;
 }
 
-function validateFileField(field: PublicFormField, value: FormDataEntryValue | null) {
+function validateFileField(
+  field: PublicFormField,
+  value: FormDataEntryValue | null,
+) {
   if (!field.required) {
     return null;
   }
@@ -193,31 +197,41 @@ function fieldHelpId(fieldId: string) {
   return `field-${fieldId}-error`;
 }
 
-function getVisibleFields(
+function getVisibleFieldIds(
   fields: PublicFormField[],
   answers: Record<string, string>,
 ) {
-  const visibleFieldIds = new Set<string>();
+  const fieldsById = new Map(fields.map((field) => [field.id, field]));
 
-  return fields.filter((field) => {
+  function isVisible(field: PublicFormField, visiting: Set<string>): boolean {
     if (!field.condition) {
-      visibleFieldIds.add(field.id);
       return true;
     }
 
-    if (!visibleFieldIds.has(field.condition.triggerFieldId)) {
+    if (visiting.has(field.id)) {
       return false;
     }
 
-    const isVisible =
-      answers[field.condition.triggerFieldId] === field.condition.triggerValue;
+    const triggerField = fieldsById.get(field.condition.triggerFieldId);
 
-    if (isVisible) {
-      visibleFieldIds.add(field.id);
+    if (!triggerField) {
+      return false;
     }
 
-    return isVisible;
-  });
+    const nextVisiting = new Set(visiting);
+    nextVisiting.add(field.id);
+
+    return (
+      isVisible(triggerField, nextVisiting) &&
+      answers[field.condition.triggerFieldId] === field.condition.triggerValue
+    );
+  }
+
+  return new Set(
+    fields
+      .filter((field) => isVisible(field, new Set()))
+      .map((field) => field.id),
+  );
 }
 
 export function FormRenderer({ form }: FormRendererProps) {
@@ -226,7 +240,55 @@ export function FormRenderer({ form }: FormRendererProps) {
   const [formError, setFormError] = useState<string | null>(null);
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const visibleFields = getVisibleFields(form.fields, answers);
+  const fileInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
+  const visibleFieldIds = getVisibleFieldIds(form.fields, answers);
+  const visibleFields = form.fields.filter((field) =>
+    visibleFieldIds.has(field.id),
+  );
+
+  useEffect(() => {
+    const nextVisibleFieldIds = getVisibleFieldIds(form.fields, answers);
+    const hiddenFieldIds = form.fields
+      .filter((field) => !nextVisibleFieldIds.has(field.id))
+      .map((field) => field.id);
+    const hiddenAnsweredFieldIds = hiddenFieldIds.filter(
+      (fieldId) => fieldId in answers,
+    );
+
+    if (hiddenAnsweredFieldIds.length > 0) {
+      setAnswers((currentAnswers) => {
+        const nextAnswers = { ...currentAnswers };
+
+        hiddenAnsweredFieldIds.forEach((fieldId) => {
+          delete nextAnswers[fieldId];
+        });
+
+        return nextAnswers;
+      });
+    }
+
+    if (hiddenFieldIds.length > 0) {
+      setFieldErrors((currentErrors) => {
+        const nextErrors = { ...currentErrors };
+        let changed = false;
+
+        hiddenFieldIds.forEach((fieldId) => {
+          if (fieldId in nextErrors) {
+            delete nextErrors[fieldId];
+            changed = true;
+          }
+
+          const fileInput = fileInputRefs.current[fieldId];
+
+          if (fileInput?.value) {
+            fileInput.value = "";
+          }
+        });
+
+        return changed ? nextErrors : currentErrors;
+      });
+    }
+  }, [answers, form.fields]);
 
   function clearFieldError(fieldId: string) {
     setFieldErrors((currentErrors) => {
@@ -282,7 +344,7 @@ export function FormRenderer({ form }: FormRendererProps) {
           setFormError(payload.error);
           setFieldErrors(payload.fieldErrors ?? {});
         } else {
-          setFormError("Could not submit this response.");
+          setFormError("Submission failed. Please try again.");
         }
 
         return;
@@ -290,13 +352,13 @@ export function FormRenderer({ form }: FormRendererProps) {
 
       router.push(`/f/${form.slug}/success`);
     } catch {
-      setFormError("Could not submit this response.");
+      setFormError("Submission failed. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
   }
 
-  function renderField(field: PublicFormField) {
+  function renderField(field: PublicFormField, isVisible: boolean) {
     const error = fieldErrors[field.id];
     const inputClassName =
       "mt-1.5 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-slate-950 outline-none transition focus:border-transparent focus:ring-2 focus:ring-blue-500 placeholder:text-slate-400 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:placeholder:text-gray-500";
@@ -309,6 +371,8 @@ export function FormRenderer({ form }: FormRendererProps) {
           name={field.id}
           rows={5}
           placeholder={field.placeholder ?? undefined}
+          value={answers[field.id] ?? ""}
+          disabled={!isVisible}
           aria-invalid={error ? "true" : "false"}
           aria-describedby={describedBy}
           onChange={(event) => updateAnswer(field.id, event.target.value)}
@@ -322,7 +386,8 @@ export function FormRenderer({ form }: FormRendererProps) {
         <select
           id={field.id}
           name={field.id}
-          defaultValue=""
+          value={answers[field.id] ?? ""}
+          disabled={!isVisible}
           aria-invalid={error ? "true" : "false"}
           aria-describedby={describedBy}
           onChange={(event) => updateAnswer(field.id, event.target.value)}
@@ -343,7 +408,12 @@ export function FormRenderer({ form }: FormRendererProps) {
 
       return (
         <div className="mt-3">
-          <input type="hidden" name={field.id} value={selectedRating} />
+          <input
+            type="hidden"
+            name={field.id}
+            value={selectedRating}
+            disabled={!isVisible}
+          />
           <div
             role="radiogroup"
             aria-labelledby={field.id}
@@ -360,6 +430,7 @@ export function FormRenderer({ form }: FormRendererProps) {
                   role="radio"
                   aria-checked={selectedRating === rating}
                   aria-label={`${rating} out of 5`}
+                  disabled={!isVisible}
                   onClick={() => {
                     updateAnswer(field.id, rating);
                   }}
@@ -388,10 +459,16 @@ export function FormRenderer({ form }: FormRendererProps) {
           id={field.id}
           name={field.id}
           type="file"
-        aria-invalid={error ? "true" : "false"}
-        aria-describedby={describedBy}
-        onChange={() => clearFieldError(field.id)}
-        className={`${inputClassName} min-h-11 py-2 file:mr-3 file:min-h-9 file:rounded-md file:border-0 file:bg-slate-950 file:px-3 file:py-2 file:text-sm file:font-medium file:text-white dark:file:bg-gray-100 dark:file:text-gray-950`}
+          ref={(element) => {
+            fileInputRefs.current[field.id] = element;
+          }}
+          disabled={!isVisible}
+          aria-invalid={error ? "true" : "false"}
+          aria-describedby={describedBy}
+          onChange={(event) =>
+            updateAnswer(field.id, event.target.files?.[0]?.name ?? "")
+          }
+          className={`${inputClassName} min-h-11 py-2 file:mr-3 file:min-h-9 file:rounded-md file:border-0 file:bg-slate-950 file:px-3 file:py-2 file:text-sm file:font-medium file:text-white dark:file:bg-gray-100 dark:file:text-gray-950`}
         />
       );
     }
@@ -402,6 +479,8 @@ export function FormRenderer({ form }: FormRendererProps) {
         name={field.id}
         type={field.type === "EMAIL" ? "email" : "text"}
         placeholder={field.placeholder ?? undefined}
+        value={answers[field.id] ?? ""}
+        disabled={!isVisible}
         aria-invalid={error ? "true" : "false"}
         aria-describedby={describedBy}
         onChange={(event) => updateAnswer(field.id, event.target.value)}
@@ -421,54 +500,74 @@ export function FormRenderer({ form }: FormRendererProps) {
         </h1>
       </div>
 
-      <form onSubmit={handleSubmit} className="mt-8 space-y-7">
-        {visibleFields.map((field) => (
-          <div key={field.id}>
-            <div className="flex items-center justify-between gap-3">
-              <label
-                id={field.type === "RATING" ? field.id : undefined}
-                htmlFor={field.type === "RATING" ? undefined : field.id}
-                className="mb-1.5 text-sm font-medium text-slate-950 dark:text-gray-100"
-              >
-                {field.label}
-              </label>
-              {field.required ? (
-                <span className="shrink-0 text-xs font-medium text-slate-500 dark:text-gray-400">
-                  Required
-                </span>
-              ) : null}
+      <form onSubmit={handleSubmit} className="mt-8">
+        {form.fields.map((field) => {
+          const isVisible = visibleFieldIds.has(field.id);
+
+          return (
+            <div
+              key={field.id}
+              aria-hidden={!isVisible}
+              className={cn(
+                "overflow-hidden transition-all duration-300 ease-in-out",
+                isVisible
+                  ? "max-h-[500px] opacity-100"
+                  : "pointer-events-none max-h-0 opacity-0",
+              )}
+            >
+              <div className="pb-7">
+                <div className="flex items-center justify-between gap-3">
+                  <label
+                    id={field.type === "RATING" ? field.id : undefined}
+                    htmlFor={field.type === "RATING" ? undefined : field.id}
+                    className="mb-1.5 text-sm font-medium text-slate-950 dark:text-gray-100"
+                  >
+                    {field.label}
+                  </label>
+                  {field.required ? (
+                    <span className="shrink-0 text-xs font-medium text-slate-500 dark:text-gray-400">
+                      Required
+                    </span>
+                  ) : null}
+                </div>
+                {renderField(field, isVisible)}
+                {fieldErrors[field.id] ? (
+                  <p
+                    id={fieldHelpId(field.id)}
+                    className="mt-2 flex items-center gap-1.5 text-sm text-red-600 dark:text-red-400"
+                  >
+                    <AlertCircle
+                      aria-hidden="true"
+                      className="h-4 w-4 shrink-0"
+                    />
+                    {fieldErrors[field.id]}
+                  </p>
+                ) : null}
+              </div>
             </div>
-            {renderField(field)}
-            {fieldErrors[field.id] ? (
-              <p
-                id={fieldHelpId(field.id)}
-                className="mt-2 flex items-center gap-1.5 text-sm text-red-600 dark:text-red-400"
-              >
-                <AlertCircle aria-hidden="true" className="h-4 w-4 shrink-0" />
-                {fieldErrors[field.id]}
-              </p>
-            ) : null}
-          </div>
-        ))}
+          );
+        })}
 
-        {formError ? (
-          <p className="flex items-center gap-2 rounded-md bg-red-50 px-3 py-2 text-sm text-red-700 dark:bg-red-950/30 dark:text-red-300">
-            <AlertCircle aria-hidden="true" className="h-4 w-4 shrink-0" />
-            {formError}
-          </p>
-        ) : null}
+        <div className="space-y-4">
+          {formError ? (
+            <p className="flex items-center gap-2 rounded-md bg-red-50 px-3 py-2 text-sm text-red-700 dark:bg-red-950/30 dark:text-red-300">
+              <AlertCircle aria-hidden="true" className="h-4 w-4 shrink-0" />
+              {formError}
+            </p>
+          ) : null}
 
-        <button
-          type="submit"
-          disabled={isSubmitting}
-          className="inline-flex h-11 w-full items-center justify-center rounded-md bg-slate-950 px-5 text-sm font-medium text-white transition-all duration-150 hover:brightness-110 active:scale-95 focus:outline-none focus:ring-2 focus:ring-slate-950 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60 disabled:active:scale-100 dark:bg-gray-100 dark:text-gray-950 dark:focus:ring-gray-200 dark:focus:ring-offset-gray-900 sm:w-auto"
-        >
-          {isSubmitting ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
-          ) : (
-            "Submit response"
-          )}
-        </button>
+          <button
+            type="submit"
+            disabled={isSubmitting}
+            className="inline-flex h-11 w-full items-center justify-center rounded-md bg-slate-950 px-5 text-sm font-medium text-white transition-all duration-150 hover:brightness-110 active:scale-95 focus:outline-none focus:ring-2 focus:ring-slate-950 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60 disabled:active:scale-100 dark:bg-gray-100 dark:text-gray-950 dark:focus:ring-gray-200 dark:focus:ring-offset-gray-900 sm:w-auto"
+          >
+            {isSubmitting ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              "Submit response"
+            )}
+          </button>
+        </div>
       </form>
     </section>
   );
