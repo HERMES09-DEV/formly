@@ -63,6 +63,7 @@ export default async function ResponsesPage({
           id: true,
           label: true,
           type: true,
+          archivedAt: true,
         },
       },
     },
@@ -120,7 +121,10 @@ export default async function ResponsesPage({
         id: form.id,
         title: form.title,
       }}
-      fields={form.fields}
+      fields={form.fields.map((field) => ({
+        ...field,
+        archivedAt: field.archivedAt?.toISOString() ?? null,
+      }))}
       submissions={submissions.map((submission) => ({
         id: submission.id,
         createdAt: submission.createdAt.toISOString(),

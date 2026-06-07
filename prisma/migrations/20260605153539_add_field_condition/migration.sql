@@ -1,2 +1,2 @@
 -- AlterTable
-ALTER TABLE `field` ADD COLUMN `condition` JSON NULL;
+ALTER TABLE "Field" ADD COLUMN "condition" JSONB;

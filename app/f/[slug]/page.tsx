@@ -85,6 +85,9 @@ export default async function PublicFormPage({
       slug: true,
       successMsg: true,
       fields: {
+        where: {
+          archivedAt: null,
+        },
         orderBy: {
           order: "asc",
         },

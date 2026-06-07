@@ -32,6 +32,10 @@ const RevokeInviteSchema = z.object({
   inviteId: z.string().min(1, "Invite id is required."),
 });
 
+const SwitchOrgSchema = z.object({
+  orgId: z.string().min(1, "Workspace id is required."),
+});
+
 type CreateOrgInput = z.infer<typeof CreateOrgSchema>;
 
 export interface CreateOrgState {
@@ -202,6 +206,11 @@ export async function createOrg(
       },
     });
 
+    await tx.user.update({
+      where: { id: userId },
+      data: { activeOrgId: createdOrg.id },
+    });
+
     return createdOrg;
   });
 
@@ -315,6 +324,11 @@ export async function removeMember(input: unknown) {
     },
     select: {
       role: true,
+      user: {
+        select: {
+          activeOrgId: true,
+        },
+      },
     },
   });
 
@@ -335,19 +349,23 @@ export async function removeMember(input: unknown) {
     }
   }
 
-  await prisma.orgMember.delete({
-    where: {
-      orgId_userId: {
-        orgId,
-        userId: data.userId,
-      },
-    },
-  });
-
-  if (data.userId === currentUserId) {
-    const nextMembership = await prisma.orgMember.findFirst({
+  const nextActiveOrgId = await prisma.$transaction(async (tx) => {
+    await tx.orgMember.delete({
       where: {
-        userId: currentUserId,
+        orgId_userId: {
+          orgId,
+          userId: data.userId,
+        },
+      },
+    });
+
+    if (memberToRemove.user.activeOrgId !== orgId) {
+      return memberToRemove.user.activeOrgId;
+    }
+
+    const nextMembership = await tx.orgMember.findFirst({
+      where: {
+        userId: data.userId,
       },
       select: {
         orgId: true,
@@ -357,15 +375,66 @@ export async function removeMember(input: unknown) {
       },
     });
 
+    const nextOrgId = nextMembership?.orgId ?? null;
+
+    await tx.user.update({
+      where: { id: data.userId },
+      data: { activeOrgId: nextOrgId },
+    });
+
+    return nextOrgId;
+  });
+
+  if (data.userId === currentUserId) {
     await unstable_update({
       user: {
         id: currentUserId,
-        orgId: nextMembership?.orgId ?? null,
+        orgId: nextActiveOrgId,
       },
     });
   }
 
   revalidatePath("/dashboard/settings/members");
+  return { success: true };
+}
+
+export async function switchOrg(input: unknown) {
+  const session = await auth();
+  if (!session?.user) throw new Error("Unauthorized");
+
+  const data = SwitchOrgSchema.parse(input);
+  const userId = session.user.id;
+  if (!userId) throw new Error("Unauthorized");
+
+  const membership = await prisma.orgMember.findUnique({
+    where: {
+      orgId_userId: {
+        orgId: data.orgId,
+        userId,
+      },
+    },
+    select: {
+      orgId: true,
+    },
+  });
+
+  if (!membership) {
+    throw new Error("Workspace not found.");
+  }
+
+  await prisma.user.update({
+    where: { id: userId },
+    data: { activeOrgId: membership.orgId },
+  });
+
+  await unstable_update({
+    user: {
+      id: userId,
+      orgId: membership.orgId,
+    },
+  });
+
+  revalidatePath("/", "layout");
   return { success: true };
 }
 

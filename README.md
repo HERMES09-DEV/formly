@@ -6,7 +6,7 @@
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178c6?style=flat-square&logo=typescript&logoColor=white)
 ![Tailwind CSS](https://img.shields.io/badge/Tailwind%20CSS-v3-38bdf8?style=flat-square&logo=tailwindcss&logoColor=white)
 ![Prisma](https://img.shields.io/badge/Prisma-v5-2d3748?style=flat-square&logo=prisma)
-![MySQL](https://img.shields.io/badge/MySQL-8-4479a1?style=flat-square&logo=mysql&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-4169e1?style=flat-square&logo=postgresql&logoColor=white)
 ![Auth.js](https://img.shields.io/badge/Auth.js-v5-000000?style=flat-square)
 ![Vercel](https://img.shields.io/badge/Vercel-ready-000000?style=flat-square&logo=vercel)
 
@@ -48,6 +48,6 @@ Open `http://localhost:3000`.
 
 ## Architecture
 
-Formly is built with Next.js 15 App Router, TypeScript, Tailwind CSS v3, Prisma v5, MySQL, Auth.js v5, Recharts, Resend, Upstash Redis, and Vercel Blob.
+Formly is built with Next.js 15 App Router, TypeScript, Tailwind CSS v3, Prisma v5, PostgreSQL, Auth.js v5, Recharts, Resend, Upstash Redis, and Vercel Blob.
 
 See [AGENTS.md](./AGENTS.md) for the full project specification, architecture rules, data model, and implementation conventions.

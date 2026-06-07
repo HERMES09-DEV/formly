@@ -413,7 +413,7 @@ export function FieldEditor({ field, fields, onUpdate }: FieldEditorProps) {
                   {triggerValues.map((triggerValue) => (
                     <option key={triggerValue} value={triggerValue}>
                       {selectedTriggerField?.type === "RATING"
-                        ? `★ ${triggerValue}`
+                        ? `Rating ${triggerValue}`
                         : triggerValue}
                     </option>
                   ))}

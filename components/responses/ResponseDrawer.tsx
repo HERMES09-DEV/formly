@@ -79,6 +79,11 @@ export function ResponseDrawer({
               <div key={field.id}>
                 <dt className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-gray-400">
                   {field.label}
+                  {field.archivedAt ? (
+                    <span className="ml-2 normal-case tracking-normal text-slate-400 dark:text-gray-500">
+                      Archived
+                    </span>
+                  ) : null}
                 </dt>
                 <dd className="mt-2 break-words text-sm leading-6 text-slate-950 dark:text-gray-100">
                   {fieldFromMap.type === "FILE" && value && isUrl(value) ? (

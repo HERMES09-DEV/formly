@@ -54,6 +54,7 @@ const providers = [
 
 const middlewareAuthConfig = {
   providers,
+  trustHost: true,
   session: {
     strategy: "jwt",
   },
@@ -172,6 +173,52 @@ async function createFormlyPrismaAdapter(
 async function createNodeAuthConfig(): Promise<NextAuthConfig> {
   const { prisma } = await import("./prisma");
 
+  async function resolveActiveOrgId(
+    userId: string,
+    requestedOrgId?: string | null,
+  ) {
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        activeOrgId: true,
+        orgs: {
+          orderBy: {
+            id: "asc",
+          },
+          select: {
+            orgId: true,
+          },
+        },
+      },
+    });
+
+    if (!user) {
+      return null;
+    }
+
+    const membershipOrgIds = new Set(
+      user.orgs.map((membership) => membership.orgId),
+    );
+    const activeOrgId =
+      (requestedOrgId && membershipOrgIds.has(requestedOrgId)
+        ? requestedOrgId
+        : null) ??
+      (user.activeOrgId && membershipOrgIds.has(user.activeOrgId)
+        ? user.activeOrgId
+        : null) ??
+      user.orgs[0]?.orgId ??
+      null;
+
+    if (user.activeOrgId !== activeOrgId) {
+      await prisma.user.update({
+        where: { id: userId },
+        data: { activeOrgId },
+      });
+    }
+
+    return activeOrgId;
+  }
+
   return {
     ...middlewareAuthConfig,
     providers,
@@ -186,17 +233,13 @@ async function createNodeAuthConfig(): Promise<NextAuthConfig> {
         const updatedOrgId = getUpdatedOrgId(session);
 
         if (trigger === "update" && updatedOrgId !== undefined) {
-          token.orgId = updatedOrgId;
+          token.orgId = token.sub
+            ? await resolveActiveOrgId(token.sub, updatedOrgId)
+            : null;
         }
 
         if (token.sub && token.orgId === undefined) {
-          const orgMember = await prisma.orgMember.findFirst({
-            where: { userId: token.sub },
-            select: { orgId: true },
-            orderBy: { id: "asc" },
-          });
-
-          token.orgId = orgMember?.orgId ?? null;
+          token.orgId = await resolveActiveOrgId(token.sub);
         }
 
         return token;
@@ -204,11 +247,9 @@ async function createNodeAuthConfig(): Promise<NextAuthConfig> {
       async session({ session, token }) {
         if (session.user && token.sub) {
           session.user.id = token.sub;
-          const member = await prisma.orgMember.findFirst({
-            where: { userId: token.sub },
-            select: { orgId: true },
-          });
-          session.user.orgId = member?.orgId ?? null;
+          const activeOrgId = await resolveActiveOrgId(token.sub);
+          token.orgId = activeOrgId;
+          session.user.orgId = activeOrgId;
         }
         return session;
       },

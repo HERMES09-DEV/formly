@@ -18,6 +18,10 @@ import {
   RequiredSubmissionTextSchema,
   SubmitFormParamsSchema,
 } from "@/lib/validations/submission";
+import {
+  createSubmissionBlobPath,
+  getSubmissionRateLimitKey,
+} from "@/lib/submission-file";
 
 export const runtime = "nodejs";
 
@@ -52,6 +56,8 @@ type PendingAnswer =
 
 let cachedRateLimit: Ratelimit | null | undefined;
 
+class SubmissionProtectionError extends Error {}
+
 function getRateLimit() {
   if (cachedRateLimit !== undefined) {
     return cachedRateLimit;
@@ -62,6 +68,16 @@ function getRateLimit() {
   const hasUpstash = url?.startsWith("https://") && token;
 
   if (!hasUpstash) {
+    const isProduction =
+      process.env.NODE_ENV === "production" &&
+      process.env.VERCEL_ENV !== "preview";
+
+    if (isProduction) {
+      throw new SubmissionProtectionError(
+        "Submission rate limiting is not configured.",
+      );
+    }
+
     cachedRateLimit = null;
     return cachedRateLimit;
   }
@@ -186,18 +202,23 @@ function validateFileField(
   field: SubmitField,
   value: FormDataEntryValue | null,
 ) {
-  const result = NonEmptyFileSchema.safeParse(value);
+  const hasFile =
+    typeof File !== "undefined" &&
+    value instanceof File &&
+    value.size > 0;
 
-  if (!result.success && field.required) {
+  if (!hasFile && !field.required) {
     return {
-      error: getFirstIssueMessage(result),
+      error: null,
       file: null,
     };
   }
 
+  const result = NonEmptyFileSchema.safeParse(value);
+
   if (!result.success) {
     return {
-      error: null,
+      error: getFirstIssueMessage(result),
       file: null,
     };
   }
@@ -296,7 +317,11 @@ function validateSubmission(fields: SubmitField[], formData: FormData) {
   };
 }
 
-async function uploadFileAnswer(file: File) {
+async function uploadFileAnswer(
+  formId: string,
+  fieldId: string,
+  file: File,
+) {
   const token = process.env.BLOB_READ_WRITE_TOKEN;
 
   if (!token) {
@@ -306,10 +331,14 @@ async function uploadFileAnswer(file: File) {
   let answerValue = "";
 
   try {
-    const blob = await put(file.name, file, {
-      access: "public",
-      token,
-    });
+    const blob = await put(
+      createSubmissionBlobPath(formId, fieldId, file.name),
+      file,
+      {
+        access: "public",
+        token,
+      },
+    );
     answerValue = blob.url;
   } catch (blobError) {
     console.error("Blob upload failed:", blobError);
@@ -319,7 +348,10 @@ async function uploadFileAnswer(file: File) {
   return answerValue;
 }
 
-async function resolveAnswerValues(pendingAnswers: PendingAnswer[]) {
+async function resolveAnswerValues(
+  formId: string,
+  pendingAnswers: PendingAnswer[],
+) {
   const answers: { fieldId: string; value: string }[] = [];
 
   for (const answer of pendingAnswers) {
@@ -331,7 +363,7 @@ async function resolveAnswerValues(pendingAnswers: PendingAnswer[]) {
     } else {
       answers.push({
         fieldId: answer.fieldId,
-        value: await uploadFileAnswer(answer.file),
+        value: await uploadFileAnswer(formId, answer.fieldId, answer.file),
       });
     }
   }
@@ -339,7 +371,7 @@ async function resolveAnswerValues(pendingAnswers: PendingAnswer[]) {
   return answers;
 }
 
-async function enforceRateLimit(request: NextRequest) {
+async function enforceRateLimit(request: NextRequest, formId: string) {
   const rateLimit = getRateLimit();
 
   if (!rateLimit) {
@@ -347,10 +379,13 @@ async function enforceRateLimit(request: NextRequest) {
   }
 
   const ip = getRequestIp(request);
-  const result = await rateLimit.limit(ip, {
-    ip,
-    userAgent: request.headers.get("user-agent") ?? undefined,
-  });
+  const result = await rateLimit.limit(
+    getSubmissionRateLimitKey(formId, ip),
+    {
+      ip,
+      userAgent: request.headers.get("user-agent") ?? undefined,
+    },
+  );
 
   if (result.success) {
     return null;
@@ -383,6 +418,9 @@ export async function POST(request: NextRequest, context: SubmitRouteContext) {
         id: true,
         published: true,
         fields: {
+          where: {
+            archivedAt: null,
+          },
           orderBy: {
             order: "asc",
           },
@@ -412,7 +450,20 @@ export async function POST(request: NextRequest, context: SubmitRouteContext) {
       );
     }
 
-    const rateLimitResponse = await enforceRateLimit(request);
+    let rateLimitResponse: NextResponse | null;
+
+    try {
+      rateLimitResponse = await enforceRateLimit(request, form.id);
+    } catch (error) {
+      if (error instanceof SubmissionProtectionError) {
+        return NextResponse.json(
+          { error: "Submissions are temporarily unavailable." },
+          { status: 503 },
+        );
+      }
+
+      throw error;
+    }
 
     if (rateLimitResponse) {
       return rateLimitResponse;
@@ -443,7 +494,7 @@ export async function POST(request: NextRequest, context: SubmitRouteContext) {
       );
     }
 
-    const answers = await resolveAnswerValues(pendingAnswers);
+    const answers = await resolveAnswerValues(form.id, pendingAnswers);
 
     await prisma.$transaction(async (tx) => {
       await tx.submission.create({

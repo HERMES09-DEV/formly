@@ -20,6 +20,10 @@ import { signOut } from "next-auth/react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
+import {
+  type WorkspaceOption,
+  WorkspaceSwitcher,
+} from "@/components/ui/workspace-switcher";
 
 interface SidebarUser {
   name: string | null | undefined;
@@ -28,8 +32,10 @@ interface SidebarUser {
 }
 
 interface SidebarProps {
+  activeOrgId: string;
   signInProvider: string | null;
   user: SidebarUser;
+  workspaces: WorkspaceOption[];
 }
 
 interface NavItem {
@@ -105,8 +111,10 @@ function SignOutButton({ compact = false }: { compact?: boolean }) {
 }
 
 function SidebarContent({
+  activeOrgId,
   signInProvider,
   user,
+  workspaces,
   onNavigate,
 }: SidebarProps & { onNavigate?: () => void }) {
   const pathname = usePathname();
@@ -126,6 +134,13 @@ function SidebarContent({
           </span>
           <span className="text-lg font-bold">Formly</span>
         </Link>
+      </div>
+
+      <div className="px-3 pt-3">
+        <WorkspaceSwitcher
+          activeOrgId={activeOrgId}
+          workspaces={workspaces}
+        />
       </div>
 
       <nav className="flex-1 space-y-1.5 px-3 py-4">
@@ -234,11 +249,31 @@ function MobileBottomNav() {
   );
 }
 
-export function Sidebar({ signInProvider, user }: SidebarProps) {
+export function Sidebar({
+  activeOrgId,
+  signInProvider,
+  user,
+  workspaces,
+}: SidebarProps) {
   const [isTabletOpen, setIsTabletOpen] = useState(false);
 
   return (
     <>
+      <div className="fixed inset-x-0 top-0 z-30 flex h-16 items-center gap-3 border-b border-slate-200/80 bg-white/95 px-4 backdrop-blur dark:border-gray-800 dark:bg-gray-900/95 md:hidden">
+        <Link
+          href="/dashboard"
+          aria-label="Formly dashboard"
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-slate-950 text-white shadow-sm dark:bg-gray-100 dark:text-gray-950"
+        >
+          <PanelsTopLeft aria-hidden="true" className="h-4 w-4" />
+        </Link>
+        <WorkspaceSwitcher
+          activeOrgId={activeOrgId}
+          workspaces={workspaces}
+          className="min-w-0 flex-1"
+        />
+      </div>
+
       <button
         type="button"
         aria-label="Open navigation"
@@ -260,8 +295,10 @@ export function Sidebar({ signInProvider, user }: SidebarProps) {
               <X aria-hidden="true" className="h-4 w-4" />
             </button>
             <SidebarContent
+              activeOrgId={activeOrgId}
               signInProvider={signInProvider}
               user={user}
+              workspaces={workspaces}
               onNavigate={() => setIsTabletOpen(false)}
             />
           </aside>
@@ -269,7 +306,12 @@ export function Sidebar({ signInProvider, user }: SidebarProps) {
       ) : null}
 
       <aside className="fixed inset-y-0 left-0 z-30 hidden w-60 flex-col border-r border-slate-200/80 bg-white shadow-[8px_0_30px_-24px_rgba(15,23,42,0.35)] dark:border-gray-800 dark:bg-gray-900 lg:flex">
-        <SidebarContent signInProvider={signInProvider} user={user} />
+        <SidebarContent
+          activeOrgId={activeOrgId}
+          signInProvider={signInProvider}
+          user={user}
+          workspaces={workspaces}
+        />
       </aside>
 
       <MobileBottomNav />

@@ -15,6 +15,7 @@ model Org {
   members   OrgMember[]
   forms     Form[]
   invites   Invite[]
+  activeUsers User[]    @relation("ActiveOrg")
 }
 
 model OrgMember {
@@ -34,13 +35,17 @@ enum Role {
 }
 
 model User {
-  id       String      @id @default(cuid())
-  email    String      @unique
-  name     String?
-  image    String?
-  orgs     OrgMember[]
-  accounts Account[]
-  sessions Session[]
+  id          String      @id @default(cuid())
+  email       String      @unique
+  name        String?
+  image       String?
+  activeOrg   Org?        @relation("ActiveOrg", fields: [activeOrgId], references: [id], onDelete: SetNull)
+  activeOrgId String?
+  orgs        OrgMember[]
+  accounts    Account[]
+  sessions    Session[]
+
+  @@index([activeOrgId])
 }
 
 model Form {
@@ -68,7 +73,10 @@ model Field {
   order       Int
   options     Json?         // for dropdown: string[]
   condition   Json?         // { triggerFieldId: string, triggerValue: string }
+  archivedAt  DateTime?
   answers     FieldAnswer[]
+
+  @@index([formId, archivedAt, order])
 }
 
 enum FieldType {

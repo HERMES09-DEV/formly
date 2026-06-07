@@ -60,7 +60,11 @@ export function FieldItem({
     : null;
 
   function handleDelete() {
-    if (!window.confirm(`Delete "${field.label}"?`)) {
+    if (
+      !window.confirm(
+        `Delete "${field.label}"? Existing response data will be preserved.`,
+      )
+    ) {
       return;
     }
 
@@ -117,7 +121,7 @@ export function FieldItem({
                 </span>
               ) : (
                 <span className="mt-0.5 block truncate text-xs text-amber-500">
-                  ⚠ Condition references a deleted field
+                  Condition references a deleted field
                 </span>
               )
             ) : null}

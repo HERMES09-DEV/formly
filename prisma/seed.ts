@@ -155,6 +155,15 @@ async function main() {
     },
   });
 
+  await prisma.user.update({
+    where: {
+      id: user.id,
+    },
+    data: {
+      activeOrgId: org.id,
+    },
+  });
+
   const feedbackForm = await prisma.form.create({
     data: {
       orgId: org.id,

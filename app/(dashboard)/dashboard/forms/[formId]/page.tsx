@@ -45,6 +45,9 @@ export default async function BuilderPage({ params }: BuilderPageProps) {
       published: true,
       successMsg: true,
       fields: {
+        where: {
+          archivedAt: null,
+        },
         orderBy: {
           order: "asc",
         },
@@ -58,6 +61,7 @@ export default async function BuilderPage({ params }: BuilderPageProps) {
           order: true,
           options: true,
           condition: true,
+          archivedAt: true,
         },
       },
     },

@@ -8,7 +8,7 @@ Follow every rule here. Do not deviate without explicit instruction.
 ## Project identity
 
 **Formly** is a multi-tenant SaaS form builder built with Next.js 15 App Router,
-TypeScript, Tailwind CSS v3, Prisma v5, MySQL, and Auth.js v5.
+TypeScript, Tailwind CSS v3, Prisma v5, PostgreSQL, and Auth.js v5.
 
 Live URL: (add after deploy)
 Repo: (https://github.com/HERMES09-DEV/formly.git)
@@ -23,7 +23,7 @@ Repo GitLab: (https://gitlab.com:HERMES09-DEV/formly.git)
 | Framework | Next.js 15 (App Router only — no Pages Router) |
 | Language | TypeScript 5.x — strict mode on |
 | Styling | Tailwind CSS v3 — no inline styles except dynamic values |
-| ORM | Prisma v5 + MySQL |
+| ORM | Prisma v5 + PostgreSQL |
 | Auth | Auth.js v5 (`next-auth@beta`) |
 | Validation | Zod — all user input, all Server Actions |
 | Drag-and-drop | `@dnd-kit/core` + `@dnd-kit/sortable` |
@@ -129,6 +129,7 @@ model Org {
   members   OrgMember[]
   forms     Form[]
   invites   Invite[]
+  activeUsers User[]    @relation("ActiveOrg")
 }
 
 model OrgMember {
@@ -148,13 +149,17 @@ enum Role {
 }
 
 model User {
-  id        String      @id @default(cuid())
-  email     String      @unique
-  name      String?
-  image     String?
-  orgs      OrgMember[]
-  accounts  Account[]
-  sessions  Session[]
+  id          String      @id @default(cuid())
+  email       String      @unique
+  name        String?
+  image       String?
+  activeOrg   Org?        @relation("ActiveOrg", fields: [activeOrgId], references: [id], onDelete: SetNull)
+  activeOrgId String?
+  orgs        OrgMember[]
+  accounts    Account[]
+  sessions    Session[]
+
+  @@index([activeOrgId])
 }
 
 model Form {
@@ -181,7 +186,11 @@ model Field {
   required  Boolean     @default(false)
   order     Int
   options   Json?       // for dropdown: string[]
+  condition Json?       // { triggerFieldId: string, triggerValue: string }
+  archivedAt DateTime?
   answers   FieldAnswer[]
+
+  @@index([formId, archivedAt, order])
 }
 
 enum FieldType {
@@ -338,7 +347,7 @@ export async function createForm(input: z.infer<typeof CreateFormSchema>) {
 
 ```
 # .env.local
-DATABASE_URL="mysql://root@localhost:3306/formly"
+DATABASE_URL="postgresql://USER:PASSWORD@HOST/DATABASE?sslmode=require"
 NEXTAUTH_SECRET="generate with: openssl rand -base64 32"
 NEXTAUTH_URL="http://localhost:3000"
 AUTH_GITHUB_ID=""

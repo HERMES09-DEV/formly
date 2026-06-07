@@ -112,6 +112,7 @@ function toBuilderField(field: BuilderField): BuilderField {
     order: field.order,
     options: field.options,
     condition: field.condition,
+    archivedAt: field.archivedAt,
   };
 }
 

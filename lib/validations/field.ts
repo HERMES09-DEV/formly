@@ -75,5 +75,10 @@ export const DeleteFieldSchema = z.object({
 
 export const ReorderFieldsSchema = z.object({
   formId: z.string().min(1, "Form id is required."),
-  orderedIds: z.array(z.string().min(1)).min(1, "Field order is required."),
+  orderedIds: z
+    .array(z.string().min(1))
+    .min(1, "Field order is required.")
+    .refine((fieldIds) => new Set(fieldIds).size === fieldIds.length, {
+      message: "Field order cannot contain duplicates.",
+    }),
 });

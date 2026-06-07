@@ -4,6 +4,7 @@ export interface ResponseField {
   id: string;
   label: string;
   type: FieldType;
+  archivedAt: string | null;
 }
 
 export interface ResponseAnswer {

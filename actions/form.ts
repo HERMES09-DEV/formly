@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import type { Prisma } from "@prisma/client";
 import { auth } from "@/lib/auth";
+import { deleteStoredBlobs } from "@/lib/blob";
 import { prisma } from "@/lib/prisma";
 import { generateSlug } from "@/lib/utils";
 import {
@@ -177,7 +178,33 @@ export async function deleteForm(input: unknown) {
   const orgId = session.user.orgId;
   if (!orgId) throw new Error("Unauthorized");
 
-  await verifyFormOwnership(data.formId, orgId);
+  const form = await prisma.form.findFirst({
+    where: {
+      id: data.formId,
+      orgId,
+    },
+    select: {
+      id: true,
+      submissions: {
+        select: {
+          answers: {
+            where: {
+              field: {
+                type: "FILE",
+              },
+            },
+            select: {
+              value: true,
+            },
+          },
+        },
+      },
+    },
+  });
+
+  if (!form) {
+    throw new Error("Form not found.");
+  }
 
   await prisma.form.deleteMany({
     where: {
@@ -185,6 +212,12 @@ export async function deleteForm(input: unknown) {
       orgId,
     },
   });
+
+  await deleteStoredBlobs(
+    form.submissions.flatMap((submission) =>
+      submission.answers.map((answer) => answer.value),
+    ),
+  );
 
   revalidatePath("/dashboard/forms");
   return { success: true };
@@ -233,6 +266,9 @@ export async function getFormAnalytics(input: unknown) {
     select: {
       id: true,
       fields: {
+        where: {
+          archivedAt: null,
+        },
         orderBy: {
           order: "asc",
         },
@@ -280,6 +316,7 @@ export async function getFormAnalytics(input: unknown) {
         where: {
           field: {
             formId: data.formId,
+            archivedAt: null,
             form: {
               orgId,
             },

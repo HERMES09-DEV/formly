@@ -5,6 +5,7 @@ import { AlertCircle, Loader2, Star } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { type FormEvent, useEffect, useRef, useState } from "react";
 import type { FieldCondition } from "@/lib/field-condition";
+import { SUBMISSION_FILE_ACCEPT } from "@/lib/submission-file";
 import { cn } from "@/lib/utils";
 import {
   NonEmptyFileSchema,
@@ -147,7 +148,12 @@ function validateFileField(
   field: PublicFormField,
   value: FormDataEntryValue | null,
 ) {
-  if (!field.required) {
+  const hasFile =
+    typeof File !== "undefined" &&
+    value instanceof File &&
+    value.size > 0;
+
+  if (!hasFile && !field.required) {
     return null;
   }
 
@@ -459,6 +465,7 @@ export function FormRenderer({ form }: FormRendererProps) {
           id={field.id}
           name={field.id}
           type="file"
+          accept={SUBMISSION_FILE_ACCEPT}
           ref={(element) => {
             fileInputRefs.current[field.id] = element;
           }}

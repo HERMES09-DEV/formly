@@ -90,6 +90,10 @@ function buildCsvRows(payload: ExportPayload) {
   });
 }
 
+function getFieldHeader(field: ResponseField) {
+  return field.archivedAt ? `${field.label} (Archived)` : field.label;
+}
+
 function downloadCsv(filename: string, csv: string) {
   const url = URL.createObjectURL(
     new Blob([csv], { type: "text/csv;charset=utf-8;" }),
@@ -134,7 +138,7 @@ export function ResponsesTable({
       void getAllSubmissionsForExport({ formId: form.id })
         .then((payload) => {
           const headers = [
-            ...payload.fields.map((field) => field.label),
+            ...payload.fields.map(getFieldHeader),
             "Submitted at",
           ];
           const csv = Papa.unparse<string[]>({
@@ -199,13 +203,18 @@ export function ResponsesTable({
                   <th
                     key={field.id}
                     scope="col"
-                    title={field.label}
+                    title={getFieldHeader(field)}
                     className={cn(
                       "border-b border-slate-200 px-4 py-3 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:border-gray-700 dark:text-gray-400",
                       index > 1 && "hidden md:table-cell",
                     )}
                   >
-                    {truncateLabel(field.label)}
+                    <span>{truncateLabel(field.label)}</span>
+                    {field.archivedAt ? (
+                      <span className="ml-2 normal-case tracking-normal text-slate-400 dark:text-gray-500">
+                        Archived
+                      </span>
+                    ) : null}
                   </th>
                 ))}
                 <th

@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { auth, unstable_update } from "@/lib/auth";
+import { inviteEmailMatches } from "@/lib/invite-email";
 import { prisma } from "@/lib/prisma";
 
 const AcceptInviteSchema = z.object({
@@ -36,7 +37,8 @@ export async function acceptInvite(input: unknown) {
   }
 
   const userId = session.user.id;
-  if (!userId) throw new Error("Unauthorized");
+  const userEmail = session.user.email;
+  if (!userId || !userEmail) throw new Error("Unauthorized");
 
   const invite = await prisma.invite.findUnique({
     where: {
@@ -45,6 +47,7 @@ export async function acceptInvite(input: unknown) {
     select: {
       id: true,
       orgId: true,
+      email: true,
       accepted: true,
       expiresAt: true,
     },
@@ -54,7 +57,30 @@ export async function acceptInvite(input: unknown) {
     throw new Error("This invite has expired.");
   }
 
+  if (!inviteEmailMatches(invite.email, userEmail)) {
+    throw new Error(
+      `Sign in with ${invite.email} to accept this workspace invite.`,
+    );
+  }
+
   await prisma.$transaction(async (tx) => {
+    const acceptedInvite = await tx.invite.updateMany({
+      where: {
+        id: invite.id,
+        accepted: false,
+        expiresAt: {
+          gt: new Date(),
+        },
+      },
+      data: {
+        accepted: true,
+      },
+    });
+
+    if (acceptedInvite.count !== 1) {
+      throw new Error("This invite has expired.");
+    }
+
     const existingMembership = await tx.orgMember.findUnique({
       where: {
         orgId_userId: {
@@ -77,12 +103,10 @@ export async function acceptInvite(input: unknown) {
       });
     }
 
-    await tx.invite.update({
-      where: {
-        id: invite.id,
-      },
+    await tx.user.update({
+      where: { id: userId },
       data: {
-        accepted: true,
+        activeOrgId: invite.orgId,
       },
     });
   });

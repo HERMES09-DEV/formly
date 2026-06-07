@@ -3,6 +3,9 @@
 import { revalidatePath } from "next/cache";
 import { Prisma } from "@prisma/client";
 import { auth } from "@/lib/auth";
+import { hasExactFieldOrder } from "@/lib/field-order";
+import { getFieldCondition } from "@/lib/field-condition";
+import { getStringOptions } from "@/lib/form-options";
 import { prisma } from "@/lib/prisma";
 import {
   CreateFieldSchema,
@@ -34,6 +37,7 @@ async function getOwnedField(fieldId: string, orgId: string) {
       form: {
         orgId,
       },
+      archivedAt: null,
     },
     select: {
       id: true,
@@ -68,9 +72,11 @@ async function verifyConditionTrigger(
       type: {
         in: ["DROPDOWN", "RATING"],
       },
+      archivedAt: null,
     },
     select: {
       type: true,
+      options: true,
     },
   });
 
@@ -83,6 +89,13 @@ async function verifyConditionTrigger(
     !["1", "2", "3", "4", "5"].includes(condition.triggerValue)
   ) {
     throw new Error("Rating conditions must equal a value from 1 to 5.");
+  }
+
+  if (
+    triggerField.type === "DROPDOWN" &&
+    !getStringOptions(triggerField.options).includes(condition.triggerValue)
+  ) {
+    throw new Error("Dropdown conditions must equal an existing option.");
   }
 }
 
@@ -102,6 +115,7 @@ export async function createField(input: unknown) {
       form: {
         orgId,
       },
+      archivedAt: null,
     },
     _max: {
       order: true,
@@ -163,6 +177,7 @@ export async function updateField(input: unknown) {
       form: {
         orgId,
       },
+      archivedAt: null,
     },
     data: updateData,
   });
@@ -173,6 +188,7 @@ export async function updateField(input: unknown) {
       form: {
         orgId,
       },
+      archivedAt: null,
     },
   });
 
@@ -194,13 +210,81 @@ export async function deleteField(input: unknown) {
 
   const field = await getOwnedField(data.fieldId, orgId);
 
-  await prisma.field.deleteMany({
+  const activeFields = await prisma.field.findMany({
     where: {
-      id: data.fieldId,
+      formId: field.formId,
       form: {
         orgId,
       },
+      archivedAt: null,
     },
+    orderBy: {
+      order: "asc",
+    },
+    select: {
+      id: true,
+      condition: true,
+    },
+  });
+  const remainingFields = activeFields.filter(
+    (activeField) => activeField.id !== data.fieldId,
+  );
+  const dependentFieldIds = remainingFields
+    .filter(
+      (activeField) =>
+        getFieldCondition(activeField.condition)?.triggerFieldId ===
+        data.fieldId,
+    )
+    .map((activeField) => activeField.id);
+
+  await prisma.$transaction(async (tx) => {
+    await tx.field.updateMany({
+      where: {
+        id: data.fieldId,
+        form: {
+          orgId,
+        },
+        archivedAt: null,
+      },
+      data: {
+        archivedAt: new Date(),
+        condition: Prisma.JsonNull,
+      },
+    });
+
+    if (dependentFieldIds.length > 0) {
+      await tx.field.updateMany({
+        where: {
+          id: {
+            in: dependentFieldIds,
+          },
+          formId: field.formId,
+          form: {
+            orgId,
+          },
+          archivedAt: null,
+        },
+        data: {
+          condition: Prisma.JsonNull,
+        },
+      });
+    }
+
+    for (const [order, activeField] of remainingFields.entries()) {
+      await tx.field.updateMany({
+        where: {
+          id: activeField.id,
+          formId: field.formId,
+          form: {
+            orgId,
+          },
+          archivedAt: null,
+        },
+        data: {
+          order,
+        },
+      });
+    }
   });
 
   revalidatePath(`/dashboard/forms/${field.formId}`);
@@ -217,27 +301,38 @@ export async function reorderFields(input: unknown) {
 
   await verifyFormOwnership(data.formId, orgId);
 
-  const fieldCount = await prisma.field.count({
+  const activeFields = await prisma.field.findMany({
     where: {
       formId: data.formId,
       form: {
         orgId,
       },
-      id: {
-        in: data.orderedIds,
-      },
+      archivedAt: null,
+    },
+    select: {
+      id: true,
     },
   });
 
-  if (fieldCount !== data.orderedIds.length) {
+  if (
+    !hasExactFieldOrder(
+      activeFields.map((field) => field.id),
+      data.orderedIds,
+    )
+  ) {
     throw new Error("Field order contains invalid fields.");
   }
 
-  await Promise.all(
+  await prisma.$transaction(
     data.orderedIds.map((fieldId, order) =>
-      prisma.field.update({
+      prisma.field.updateMany({
         where: {
           id: fieldId,
+          formId: data.formId,
+          form: {
+            orgId,
+          },
+          archivedAt: null,
         },
         data: {
           order,

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { getSubmissionFileError } from "@/lib/submission-file";
 
 const emailFormatSchema = z.string().email();
 
@@ -42,4 +43,17 @@ export const NonEmptyFileSchema = z.custom<File>(
   (value) =>
     typeof File !== "undefined" && value instanceof File && value.size > 0,
   "A file is required.",
-);
+).superRefine((file, context) => {
+  if (typeof File === "undefined" || !(file instanceof File)) {
+    return;
+  }
+
+  const error = getSubmissionFileError(file);
+
+  if (error) {
+    context.addIssue({
+      code: "custom",
+      message: error,
+    });
+  }
+});
