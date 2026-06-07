@@ -5,7 +5,7 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "Formly",
-  description: "Multi-tenant SaaS form builder",
+  description: "A workspace-focused form builder",
 };
 
 const themeScript = `
