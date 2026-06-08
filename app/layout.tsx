@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import { Manrope, Space_Grotesk } from "next/font/google";
 import { Toaster } from "sonner";
+import { NavigationProgress } from "@/components/ui/navigation-progress";
 import "./globals.css";
 
 const manrope = Manrope({
@@ -72,6 +73,7 @@ export default function RootLayout({
       <body
         className={`${manrope.variable} ${spaceGrotesk.variable} font-sans`}
       >
+        <NavigationProgress />
         {children}
         <Toaster richColors position="bottom-right" />
       </body>

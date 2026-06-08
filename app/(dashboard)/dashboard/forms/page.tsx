@@ -3,6 +3,7 @@ import { FolderOpen } from "lucide-react";
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { EmptyState } from "@/components/ui/empty-state";
 import { FormCard } from "@/components/forms/FormCard";
 import { NewFormDialog } from "@/components/forms/NewFormDialog";
 
@@ -69,21 +70,13 @@ export default async function FormsPage() {
           ))}
         </div>
       ) : (
-        <section className="animate-fadeIn flex min-h-80 flex-col items-center justify-center rounded-lg border border-dashed border-slate-300 bg-white p-8 text-center dark:border-gray-700 dark:bg-gray-900">
-          <FolderOpen
-            aria-hidden="true"
-            className="h-12 w-12 text-slate-300 dark:text-gray-600"
-          />
-          <h2 className="mt-4 text-lg font-semibold text-slate-950 dark:text-gray-100">
-            No forms yet
-          </h2>
-          <p className="mt-2 text-sm text-slate-600 dark:text-gray-300">
-            Create your first form.
-          </p>
-          <div className="mt-5">
-            <NewFormDialog />
-          </div>
-        </section>
+        <EmptyState
+          icon={FolderOpen}
+          title="No forms yet"
+          description="Create your first form and it will appear here."
+          action={<NewFormDialog />}
+          className="min-h-80"
+        />
       )}
     </div>
   );

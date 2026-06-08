@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { signIn } from "@/lib/auth";
 import { SubmitButton } from "@/components/ui/submit-button";
 
@@ -84,6 +85,23 @@ export default function LoginPage() {
             </SubmitButton>
           </form>
         </div>
+        <p className="mt-4 text-center text-xs leading-5 text-gray-400">
+          By signing in, you agree to our{" "}
+          <Link
+            href="/terms"
+            className="underline underline-offset-4 transition-colors hover:text-gray-600 dark:hover:text-gray-200"
+          >
+            Terms of Service
+          </Link>{" "}
+          and{" "}
+          <Link
+            href="/privacy"
+            className="underline underline-offset-4 transition-colors hover:text-gray-600 dark:hover:text-gray-200"
+          >
+            Privacy Policy
+          </Link>
+          .
+        </p>
       </section>
     </main>
   );

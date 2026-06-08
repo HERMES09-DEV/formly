@@ -55,10 +55,17 @@ export function OnboardingForm() {
             type="submit"
             disabled={isPending}
             className="h-11 w-full"
+            aria-busy={isPending}
             aria-label={isPending ? "Creating workspace" : undefined}
           >
             {isPending ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
+              <>
+                <Loader2
+                  aria-hidden="true"
+                  className="h-4 w-4 animate-spin"
+                />
+                Creating workspace
+              </>
             ) : (
               "Create workspace"
             )}

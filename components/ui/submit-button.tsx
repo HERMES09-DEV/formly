@@ -32,9 +32,17 @@ export function SubmitButton({
       variant={variant}
       size={size}
       disabled={pending}
+      aria-busy={pending}
       aria-label={pending ? accessiblePendingLabel : undefined}
     >
-      {pending ? <Loader2 className="h-4 w-4 animate-spin" /> : children}
+      {pending ? (
+        <>
+          <Loader2 aria-hidden="true" className="h-4 w-4 animate-spin" />
+          <span>{accessiblePendingLabel}</span>
+        </>
+      ) : (
+        children
+      )}
     </Button>
   );
 }

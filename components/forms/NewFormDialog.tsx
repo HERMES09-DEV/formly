@@ -112,10 +112,17 @@ export function NewFormDialog() {
                 <Button
                   type="submit"
                   disabled={isPending}
+                  aria-busy={isPending}
                   aria-label={isPending ? "Creating form" : undefined}
                 >
                   {isPending ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <>
+                      <Loader2
+                        aria-hidden="true"
+                        className="h-4 w-4 animate-spin"
+                      />
+                      Creating form
+                    </>
                   ) : (
                     "Create form"
                   )}

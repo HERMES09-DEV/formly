@@ -119,6 +119,44 @@
   animation: fadeIn 0.25s ease-out both;
 }
 
+@keyframes navSweep {
+  0% {
+    transform: translateX(-120%);
+  }
+  55% {
+    transform: translateX(85%);
+  }
+  100% {
+    transform: translateX(220%);
+  }
+}
+
+@keyframes loadingDots {
+  0%,
+  20% {
+    content: "";
+  }
+  40% {
+    content: ".";
+  }
+  60% {
+    content: "..";
+  }
+  80%,
+  100% {
+    content: "...";
+  }
+}
+
+.animate-navSweep {
+  animation: navSweep 1.05s cubic-bezier(0.65, 0, 0.35, 1) infinite;
+}
+
+.animate-loadingDots::after {
+  animation: loadingDots 1.2s steps(1, end) infinite;
+  content: "";
+}
+
 @keyframes overlayIn {
   from {
     opacity: 0;
@@ -238,6 +276,8 @@
   .animate-slideInLeft,
   .animate-slideInRight,
   .animate-slideUp,
+  .animate-navSweep,
+  .animate-loadingDots::after,
   .animate-stagger > * {
     animation: none;
     opacity: 1;

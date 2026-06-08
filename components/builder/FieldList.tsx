@@ -38,6 +38,7 @@ import { createField, reorderFields } from "@/actions/field";
 import { FieldItem } from "@/components/builder/FieldItem";
 import type { BuilderField } from "@/components/builder/FormBuilder";
 import { Button } from "@/components/ui/Button";
+import { EmptyState } from "@/components/ui/empty-state";
 
 interface FieldListProps {
   formId: string;
@@ -248,15 +249,12 @@ export function FieldList({
           </SortableContext>
         </DndContext>
       ) : (
-        <div className="flex flex-col items-center rounded-md border border-dashed border-slate-300 p-8 text-center dark:border-gray-700">
-          <FolderOpen
-            aria-hidden="true"
-            className="mb-3 h-8 w-8 text-slate-300 dark:text-gray-600"
-          />
-          <p className="text-sm text-slate-600 dark:text-gray-300">
-            Add a field to start building this form.
-          </p>
-        </div>
+        <EmptyState
+          icon={FolderOpen}
+          title="No fields yet"
+          description="Add a field to start building this form."
+          compact
+        />
       )}
 
       <div className="relative mt-5">

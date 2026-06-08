@@ -12,6 +12,7 @@ import { getFormAnalytics } from "@/actions/form";
 import { CompletionChart } from "@/components/analytics/CompletionChart";
 import { SubmissionsChart } from "@/components/analytics/SubmissionsChart";
 import { FormNavTabs } from "@/components/builder/FormNavTabs";
+import { EmptyState } from "@/components/ui/empty-state";
 
 export const metadata: Metadata = {
   title: "Analytics | Formly",
@@ -39,10 +40,13 @@ function formatAverage(value: number) {
 
 function ChartEmptyState() {
   return (
-    <div className="animate-fadeIn flex h-72 flex-col items-center justify-center text-slate-400 dark:text-gray-500">
-      <BarChart2 aria-hidden="true" className="h-10 w-10" />
-      <p className="mt-3 text-sm font-medium">Not enough data yet</p>
-    </div>
+    <EmptyState
+      icon={BarChart2}
+      title="Not enough data yet"
+      description="Responses will appear in this chart as people submit the form."
+      compact
+      className="h-72 border-0 bg-transparent dark:bg-transparent"
+    />
   );
 }
 

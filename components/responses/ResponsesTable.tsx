@@ -14,6 +14,7 @@ import type {
   ResponsesPagination,
 } from "@/components/responses/types";
 import { Button } from "@/components/ui/Button";
+import { EmptyState } from "@/components/ui/empty-state";
 import { cn } from "@/lib/utils";
 
 interface ResponsesTableForm {
@@ -255,20 +256,15 @@ export function ResponsesTable({
                 <tr>
                   <td
                     colSpan={fields.length + 1}
-                    className="px-4 py-16 text-center text-sm text-slate-600 dark:text-gray-300"
+                    className="px-4 py-10 text-center text-sm text-slate-600 dark:text-gray-300"
                   >
-                    <div className="animate-fadeIn flex flex-col items-center">
-                      <Inbox
-                        aria-hidden="true"
-                        className="h-12 w-12 text-slate-300 dark:text-gray-600"
-                      />
-                      <h2 className="mt-4 text-lg font-semibold text-slate-950 dark:text-gray-100">
-                        No responses yet
-                      </h2>
-                      <p className="mt-2 text-sm text-slate-600 dark:text-gray-300">
-                        Share your form link to start collecting responses.
-                      </p>
-                    </div>
+                    <EmptyState
+                      icon={Inbox}
+                      title="No responses yet"
+                      description="Share your form link to start collecting responses."
+                      compact
+                      className="border-0 bg-transparent dark:bg-transparent"
+                    />
                   </td>
                 </tr>
               )}

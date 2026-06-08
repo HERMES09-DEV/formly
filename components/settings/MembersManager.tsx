@@ -1,11 +1,12 @@
 "use client";
 
-import { Loader2, Mail, Trash2, Users } from "lucide-react";
+import { Inbox, Loader2, Mail, Trash2, Users } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { type FormEvent, useState, useTransition } from "react";
 import { toast } from "sonner";
 import { inviteMember, removeMember, revokeInvite } from "@/actions/org";
 import { Button } from "@/components/ui/Button";
+import { EmptyState } from "@/components/ui/empty-state";
 import { cn } from "@/lib/utils";
 
 type MemberRole = "OWNER" | "MEMBER";
@@ -271,9 +272,15 @@ export function MembersManager({
               ))}
             </div>
           ) : (
-            <p className="px-5 py-8 text-sm text-slate-600 dark:text-gray-300">
-              No pending invites.
-            </p>
+            <div className="px-5 py-6">
+              <EmptyState
+                icon={Inbox}
+                title="No pending invites"
+                description="Invites you send will stay here until they are accepted or expire."
+                compact
+                className="border-0 bg-slate-50 dark:bg-gray-800"
+              />
+            </div>
           )}
         </section>
       ) : null}

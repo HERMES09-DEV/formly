@@ -205,6 +205,22 @@ function SidebarContent({
         </div>
         <ThemeToggle />
         <SignOutButton />
+        <div className="flex gap-3 px-1 pb-1">
+          <Link
+            href="/privacy"
+            onClick={onNavigate}
+            className="text-xs text-gray-400 transition-colors hover:text-gray-600 dark:hover:text-gray-200"
+          >
+            Privacy
+          </Link>
+          <Link
+            href="/terms"
+            onClick={onNavigate}
+            className="text-xs text-gray-400 transition-colors hover:text-gray-600 dark:hover:text-gray-200"
+          >
+            Terms
+          </Link>
+        </div>
       </div>
     </>
   );

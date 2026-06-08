@@ -1,7 +1,7 @@
 "use client";
 
 import type { FieldType } from "@prisma/client";
-import { AlertCircle, Loader2, Star } from "lucide-react";
+import { AlertCircle, Loader2, ShieldCheck, Star } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { type FormEvent, useEffect, useRef, useState } from "react";
 import type { FieldCondition } from "@/lib/field-condition";
@@ -378,7 +378,7 @@ export function FormRenderer({ form }: FormRendererProps) {
           rows={5}
           placeholder={field.placeholder ?? undefined}
           value={answers[field.id] ?? ""}
-          disabled={!isVisible}
+          disabled={!isVisible || isSubmitting}
           aria-invalid={error ? "true" : "false"}
           aria-describedby={describedBy}
           onChange={(event) => updateAnswer(field.id, event.target.value)}
@@ -393,7 +393,7 @@ export function FormRenderer({ form }: FormRendererProps) {
           id={field.id}
           name={field.id}
           value={answers[field.id] ?? ""}
-          disabled={!isVisible}
+          disabled={!isVisible || isSubmitting}
           aria-invalid={error ? "true" : "false"}
           aria-describedby={describedBy}
           onChange={(event) => updateAnswer(field.id, event.target.value)}
@@ -418,7 +418,7 @@ export function FormRenderer({ form }: FormRendererProps) {
             type="hidden"
             name={field.id}
             value={selectedRating}
-            disabled={!isVisible}
+            disabled={!isVisible || isSubmitting}
           />
           <div
             role="radiogroup"
@@ -436,7 +436,7 @@ export function FormRenderer({ form }: FormRendererProps) {
                   role="radio"
                   aria-checked={selectedRating === rating}
                   aria-label={`${rating} out of 5`}
-                  disabled={!isVisible}
+                  disabled={!isVisible || isSubmitting}
                   onClick={() => {
                     updateAnswer(field.id, rating);
                   }}
@@ -469,7 +469,7 @@ export function FormRenderer({ form }: FormRendererProps) {
           ref={(element) => {
             fileInputRefs.current[field.id] = element;
           }}
-          disabled={!isVisible}
+          disabled={!isVisible || isSubmitting}
           aria-invalid={error ? "true" : "false"}
           aria-describedby={describedBy}
           onChange={(event) =>
@@ -487,7 +487,7 @@ export function FormRenderer({ form }: FormRendererProps) {
         type={field.type === "EMAIL" ? "email" : "text"}
         placeholder={field.placeholder ?? undefined}
         value={answers[field.id] ?? ""}
-        disabled={!isVisible}
+          disabled={!isVisible || isSubmitting}
         aria-invalid={error ? "true" : "false"}
         aria-describedby={describedBy}
         onChange={(event) => updateAnswer(field.id, event.target.value)}
@@ -556,6 +556,24 @@ export function FormRenderer({ form }: FormRendererProps) {
         })}
 
         <div className="space-y-4">
+          {isSubmitting ? (
+            <div
+              role="status"
+              aria-live="polite"
+              className="animate-fadeIn flex items-start gap-3 rounded-lg border border-blue-100 bg-blue-50 px-3 py-3 text-sm text-blue-800 dark:border-blue-900/60 dark:bg-blue-950/35 dark:text-blue-200"
+            >
+              <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-white text-blue-600 shadow-sm dark:bg-gray-900 dark:text-blue-300">
+                <ShieldCheck aria-hidden="true" className="h-4 w-4" />
+              </span>
+              <span>
+                <span className="font-medium">Submitting response</span>
+                <span className="block text-blue-700/80 dark:text-blue-200/80">
+                  Please keep this page open for a moment.
+                </span>
+              </span>
+            </div>
+          ) : null}
+
           {formError ? (
             <p className="flex items-center gap-2 rounded-md bg-red-50 px-3 py-2 text-sm text-red-700 dark:bg-red-950/30 dark:text-red-300">
               <AlertCircle aria-hidden="true" className="h-4 w-4 shrink-0" />
@@ -566,10 +584,17 @@ export function FormRenderer({ form }: FormRendererProps) {
           <button
             type="submit"
             disabled={isSubmitting}
-            className="inline-flex h-11 w-full items-center justify-center rounded-md bg-slate-950 px-5 text-sm font-medium text-white transition-all duration-150 hover:brightness-110 active:scale-95 focus:outline-none focus:ring-2 focus:ring-slate-950 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60 disabled:active:scale-100 dark:bg-gray-100 dark:text-gray-950 dark:focus:ring-gray-200 dark:focus:ring-offset-gray-900 sm:w-auto"
+            aria-busy={isSubmitting}
+            className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-md bg-slate-950 px-5 text-sm font-medium text-white transition-all duration-150 hover:brightness-110 active:scale-95 focus:outline-none focus:ring-2 focus:ring-slate-950 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60 disabled:active:scale-100 dark:bg-gray-100 dark:text-gray-950 dark:focus:ring-gray-200 dark:focus:ring-offset-gray-900 sm:w-auto"
           >
             {isSubmitting ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
+              <>
+                <Loader2
+                  aria-hidden="true"
+                  className="h-4 w-4 animate-spin"
+                />
+                Submitting response
+              </>
             ) : (
               "Submit response"
             )}
