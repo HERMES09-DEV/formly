@@ -117,8 +117,8 @@ export default function PrivacyPage() {
       <h2>Contact</h2>
       <p>
         For privacy questions or data requests:{" "}
-        <a href="mailto:gallendezmiguel@gmail.com">
-          gallendezmiguel@gmail.com
+        <a href="mailto:hermescollective@googlegroups.com">
+          hermescollective@googlegroups.com
         </a>
       </p>
     </article>

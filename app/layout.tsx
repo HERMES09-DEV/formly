@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import { Manrope, Space_Grotesk } from "next/font/google";
 import { Toaster } from "sonner";
 import { NavigationProgress } from "@/components/ui/navigation-progress";
+import { SkipLink } from "@/components/ui/skip-link";
 import "./globals.css";
 
 const manrope = Manrope({
@@ -17,7 +18,12 @@ const spaceGrotesk = Space_Grotesk({
   display: "swap",
 });
 
+const metadataBase = new URL(
+  process.env.NEXTAUTH_URL ?? "http://localhost:3000",
+);
+
 export const metadata: Metadata = {
+  metadataBase,
   title: "Formly",
   description: "A workspace-focused form builder",
   manifest: "/favicons/site.webmanifest",
@@ -73,6 +79,7 @@ export default function RootLayout({
       <body
         className={`${manrope.variable} ${spaceGrotesk.variable} font-sans`}
       >
+        <SkipLink />
         <NavigationProgress />
         {children}
         <Toaster richColors position="bottom-right" />

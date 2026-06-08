@@ -2,10 +2,17 @@
 
 import { Loader2, Plus, X } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { type FormEvent, useState, useTransition } from "react";
+import {
+  type FormEvent,
+  useCallback,
+  useRef,
+  useState,
+  useTransition,
+} from "react";
 import { toast } from "sonner";
 import { createForm } from "@/actions/form";
 import { Button } from "@/components/ui/Button";
+import { useModalA11y } from "@/components/ui/use-modal-a11y";
 
 function getErrorMessage(error: unknown) {
   if (error instanceof Error) {
@@ -20,15 +27,25 @@ export function NewFormDialog() {
   const [isOpen, setIsOpen] = useState(false);
   const [title, setTitle] = useState("");
   const [isPending, startTransition] = useTransition();
+  const dialogRef = useRef<HTMLElement | null>(null);
+  const titleInputRef = useRef<HTMLInputElement | null>(null);
 
-  function closeDialog() {
+  const closeDialog = useCallback(() => {
     if (isPending) {
       return;
     }
 
     setIsOpen(false);
     setTitle("");
-  }
+  }, [isPending]);
+
+  useModalA11y({
+    isOpen,
+    onClose: closeDialog,
+    dialogRef,
+    initialFocusRef: titleInputRef,
+    preventClose: isPending,
+  });
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -57,13 +74,27 @@ export function NewFormDialog() {
 
       {isOpen ? (
         <div className="animate-overlayIn fixed inset-0 z-50 flex items-center justify-center bg-slate-950/45 px-4 backdrop-blur-[2px]">
-          <div className="animate-scaleIn w-full max-w-md rounded-lg border border-slate-200 bg-white p-6 shadow-2xl dark:border-gray-700 dark:bg-gray-900">
+          <section
+            ref={dialogRef}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="new-form-dialog-title"
+            aria-describedby="new-form-dialog-description"
+            tabIndex={-1}
+            className="animate-scaleIn w-full max-w-md rounded-lg border border-slate-200 bg-white p-6 shadow-2xl dark:border-gray-700 dark:bg-gray-900"
+          >
             <div className="relative text-center">
               <div className="px-10">
-                <h2 className="text-lg font-semibold text-slate-950 dark:text-gray-100">
+                <h2
+                  id="new-form-dialog-title"
+                  className="text-lg font-semibold text-slate-950 dark:text-gray-100"
+                >
                   New form
                 </h2>
-                <p className="mt-1 text-sm text-slate-600 dark:text-gray-300">
+                <p
+                  id="new-form-dialog-description"
+                  className="mt-1 text-sm text-slate-600 dark:text-gray-300"
+                >
                   Name the form before opening the builder.
                 </p>
               </div>
@@ -91,6 +122,7 @@ export function NewFormDialog() {
                   id="form-title"
                   name="title"
                   type="text"
+                  ref={titleInputRef}
                   required
                   minLength={1}
                   maxLength={100}
@@ -129,7 +161,7 @@ export function NewFormDialog() {
                 </Button>
               </div>
             </form>
-          </div>
+          </section>
         </div>
       ) : null}
     </>

@@ -48,6 +48,7 @@ export function FormNavTabs({ formId, className }: FormNavTabsProps) {
           <Link
             key={tab.segment}
             href={href}
+            aria-current={isActive ? "page" : undefined}
             className={cn(
               "inline-flex h-8 items-center justify-center gap-2 rounded px-3 text-sm font-medium text-slate-600 transition-colors duration-150 hover:bg-slate-100 hover:text-slate-950 dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-gray-100",
               isActive &&

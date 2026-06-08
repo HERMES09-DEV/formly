@@ -1,4 +1,4 @@
-import type { ButtonHTMLAttributes } from "react";
+import { forwardRef, type ButtonHTMLAttributes } from "react";
 import { cn } from "@/lib/utils";
 
 const buttonVariants = {
@@ -21,15 +21,20 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   size?: keyof typeof buttonSizes;
 }
 
-export function Button({
-  className,
-  variant = "primary",
-  size = "md",
-  type = "button",
-  ...props
-}: ButtonProps) {
+export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
+  function Button(
+    {
+      className,
+      variant = "primary",
+      size = "md",
+      type = "button",
+      ...props
+    },
+    ref,
+  ) {
   return (
     <button
+      ref={ref}
       type={type}
       className={cn(
         "inline-flex items-center justify-center gap-2 rounded-md font-medium transition-all duration-200 ease-out active:translate-y-0 active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-slate-950 focus:ring-offset-2 disabled:cursor-not-allowed disabled:translate-y-0 disabled:opacity-60 disabled:shadow-none disabled:active:scale-100 motion-reduce:transform-none motion-reduce:transition-none",
@@ -41,4 +46,5 @@ export function Button({
       {...props}
     />
   );
-}
+  },
+);

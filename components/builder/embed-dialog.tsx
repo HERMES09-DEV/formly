@@ -1,9 +1,10 @@
 "use client";
 
 import { Code2, Copy, X } from "lucide-react";
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/Button";
+import { useModalA11y } from "@/components/ui/use-modal-a11y";
 
 interface EmbedDialogProps {
   baseUrl: string;
@@ -16,15 +17,24 @@ function normalizeBaseUrl(baseUrl: string) {
 
 export function EmbedDialog({ baseUrl, slug }: EmbedDialogProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const dialogRef = useRef<HTMLElement | null>(null);
+  const copyButtonRef = useRef<HTMLButtonElement | null>(null);
   const embedUrl = useMemo(
     () => `${normalizeBaseUrl(baseUrl)}/f/${slug}?embed=1`,
     [baseUrl, slug],
   );
   const iframeSnippet = `<iframe src="${embedUrl}" width="100%" height="600" frameborder="0"></iframe>`;
 
-  function closeDialog() {
+  const closeDialog = useCallback(() => {
     setIsOpen(false);
-  }
+  }, []);
+
+  useModalA11y({
+    isOpen,
+    onClose: closeDialog,
+    dialogRef,
+    initialFocusRef: copyButtonRef,
+  });
 
   function copySnippet() {
     void navigator.clipboard
@@ -50,6 +60,9 @@ export function EmbedDialog({ baseUrl, slug }: EmbedDialogProps) {
             aria-modal="true"
             role="dialog"
             aria-labelledby="embed-dialog-title"
+            aria-describedby="embed-dialog-description"
+            ref={dialogRef}
+            tabIndex={-1}
             className="animate-scaleIn w-full max-w-xl rounded-lg border border-slate-200 bg-white p-5 shadow-2xl dark:border-gray-700 dark:bg-gray-900"
           >
             <div className="flex items-start justify-between gap-4">
@@ -76,15 +89,19 @@ export function EmbedDialog({ baseUrl, slug }: EmbedDialogProps) {
             <textarea
               readOnly
               value={iframeSnippet}
+              aria-label="Iframe embed snippet"
               className="mt-5 min-h-32 w-full resize-none rounded-md border border-slate-300 bg-slate-50 p-3 font-mono text-sm text-slate-950 outline-none dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
             />
 
             <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <p className="text-sm text-slate-600 dark:text-gray-300">
+              <p
+                id="embed-dialog-description"
+                className="text-sm text-slate-600 dark:text-gray-300"
+              >
                 Paste this into any webpage to embed your form.
               </p>
               <div className="flex items-center gap-3">
-                <Button onClick={copySnippet}>
+                <Button ref={copyButtonRef} onClick={copySnippet}>
                   <Copy aria-hidden="true" className="h-4 w-4" />
                   Copy
                 </Button>

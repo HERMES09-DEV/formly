@@ -17,9 +17,10 @@ import {
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
-import { useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
+import { useModalA11y } from "@/components/ui/use-modal-a11y";
 import {
   type WorkspaceOption,
   WorkspaceSwitcher,
@@ -153,6 +154,7 @@ function SidebarContent({
             <Link
               key={item.href}
               href={item.href}
+              aria-current={isActive ? "page" : undefined}
               onClick={onNavigate}
               className={cn(
                 "group relative flex h-11 items-center gap-3 overflow-hidden rounded-md px-3 text-sm font-medium text-slate-600 transition-all duration-200 ease-out hover:translate-x-0.5 hover:bg-slate-100 hover:text-slate-950 dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-gray-100",
@@ -240,6 +242,7 @@ function MobileBottomNav() {
           <Link
             key={item.href}
             href={item.href}
+            aria-current={isActive ? "page" : undefined}
             className={cn(
               "group relative flex h-14 flex-1 flex-col items-center justify-center gap-1 rounded-md text-xs font-medium text-slate-600 transition-all duration-200 hover:bg-slate-100 hover:text-slate-950 dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-gray-100",
               isActive &&
@@ -272,6 +275,18 @@ export function Sidebar({
   workspaces,
 }: SidebarProps) {
   const [isTabletOpen, setIsTabletOpen] = useState(false);
+  const tabletDialogRef = useRef<HTMLDivElement | null>(null);
+  const closeTabletButtonRef = useRef<HTMLButtonElement | null>(null);
+  const closeTabletNavigation = useCallback(() => {
+    setIsTabletOpen(false);
+  }, []);
+
+  useModalA11y({
+    isOpen: isTabletOpen,
+    onClose: closeTabletNavigation,
+    dialogRef: tabletDialogRef,
+    initialFocusRef: closeTabletButtonRef,
+  });
 
   return (
     <>
@@ -293,6 +308,8 @@ export function Sidebar({
       <button
         type="button"
         aria-label="Open navigation"
+        aria-expanded={isTabletOpen}
+        aria-controls="tablet-navigation"
         onClick={() => setIsTabletOpen(true)}
         className="fixed left-4 top-4 z-40 hidden h-11 w-11 items-center justify-center rounded-md border border-slate-200 bg-white/90 text-slate-700 shadow-sm backdrop-blur transition-all duration-200 hover:-translate-y-px hover:border-slate-300 hover:bg-white hover:text-slate-950 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-slate-950 focus:ring-offset-2 dark:border-gray-700 dark:bg-gray-900/90 dark:text-gray-200 dark:hover:border-gray-600 dark:hover:bg-gray-900 dark:hover:text-gray-100 dark:focus:ring-gray-200 dark:focus:ring-offset-gray-950 md:flex lg:hidden"
       >
@@ -300,12 +317,22 @@ export function Sidebar({
       </button>
 
       {isTabletOpen ? (
-        <div className="animate-overlayIn fixed inset-0 z-50 hidden bg-slate-950/45 backdrop-blur-[2px] md:block lg:hidden">
-          <aside className="animate-slideInLeft flex h-full w-72 flex-col border-r border-slate-200 bg-white shadow-2xl dark:border-gray-700 dark:bg-gray-900">
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label="Navigation"
+          ref={tabletDialogRef}
+          className="animate-overlayIn fixed inset-0 z-50 hidden bg-slate-950/45 backdrop-blur-[2px] md:block lg:hidden"
+        >
+          <aside
+            id="tablet-navigation"
+            className="animate-slideInLeft flex h-full w-72 flex-col border-r border-slate-200 bg-white shadow-2xl dark:border-gray-700 dark:bg-gray-900"
+          >
             <button
               type="button"
               aria-label="Close navigation"
-              onClick={() => setIsTabletOpen(false)}
+              ref={closeTabletButtonRef}
+              onClick={closeTabletNavigation}
               className="absolute left-[18rem] top-4 flex h-10 w-10 items-center justify-center rounded-md border border-slate-200 bg-white text-slate-700 shadow-md transition-all duration-200 hover:rotate-90 hover:bg-slate-100 hover:text-slate-950 focus:outline-none focus:ring-2 focus:ring-slate-950 focus:ring-offset-2 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200 dark:hover:bg-gray-800 dark:hover:text-gray-100 dark:focus:ring-gray-200 dark:focus:ring-offset-gray-950"
             >
               <X aria-hidden="true" className="h-4 w-4" />
@@ -315,7 +342,7 @@ export function Sidebar({
               signInProvider={signInProvider}
               user={user}
               workspaces={workspaces}
-              onNavigate={() => setIsTabletOpen(false)}
+              onNavigate={closeTabletNavigation}
             />
           </aside>
         </div>

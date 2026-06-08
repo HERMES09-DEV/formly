@@ -23,7 +23,10 @@ export function OnboardingForm() {
   }, [state.error]);
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-slate-50 px-4 py-12 text-slate-950 dark:bg-gray-950 dark:text-gray-100">
+    <main
+      id="main-content"
+      className="flex min-h-screen items-center justify-center bg-slate-50 px-4 py-12 text-slate-950 dark:bg-gray-950 dark:text-gray-100"
+    >
       <section className="animate-fadeUp w-full max-w-md rounded-lg border border-slate-200 bg-white p-6 shadow-sm dark:border-gray-700 dark:bg-gray-900">
         <div className="space-y-2">
           <h1 className="text-2xl font-semibold">Create your workspace</h1>

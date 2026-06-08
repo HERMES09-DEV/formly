@@ -69,7 +69,10 @@ export default async function DashboardLayout({
           role: membership.role,
         }))}
       />
-      <main className="min-h-screen px-4 pb-24 pt-20 sm:px-6 md:px-8 lg:ml-60 lg:py-8">
+      <main
+        id="main-content"
+        className="min-h-screen px-4 pb-24 pt-20 sm:px-6 md:px-8 lg:ml-60 lg:py-8"
+      >
         <PageTransition>{children}</PageTransition>
       </main>
     </div>

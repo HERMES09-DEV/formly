@@ -36,6 +36,10 @@
   ::selection {
     @apply bg-blue-200 text-slate-950 dark:bg-blue-800 dark:text-white;
   }
+
+  :where(a, button, input, select, textarea, [tabindex]):focus-visible {
+    @apply outline-none ring-2 ring-blue-500 ring-offset-2 ring-offset-white dark:ring-blue-400 dark:ring-offset-gray-950;
+  }
 }
 
 @keyframes pageIn {

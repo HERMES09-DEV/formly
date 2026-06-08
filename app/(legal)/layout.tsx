@@ -7,7 +7,10 @@ interface LegalLayoutProps {
 
 export default function LegalLayout({ children }: LegalLayoutProps) {
   return (
-    <main className="min-h-screen bg-white px-6 py-12 text-slate-950 dark:bg-gray-950 dark:text-gray-100">
+    <main
+      id="main-content"
+      className="min-h-screen bg-white px-6 py-12 text-slate-950 dark:bg-gray-950 dark:text-gray-100"
+    >
       <div className="mx-auto max-w-2xl">
         <Link
           href="/dashboard"

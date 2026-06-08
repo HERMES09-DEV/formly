@@ -11,7 +11,10 @@ interface PublicFormSuccessPageProps {
 
 function UnavailableFormSuccess() {
   return (
-    <main className="min-h-screen bg-slate-50 px-4 py-10 text-slate-950 dark:bg-gray-950 dark:text-gray-100 sm:py-16">
+    <main
+      id="main-content"
+      className="min-h-screen bg-slate-50 px-4 py-10 text-slate-950 dark:bg-gray-950 dark:text-gray-100 sm:py-16"
+    >
       <section className="animate-fadeUp mx-auto w-full max-w-xl rounded-lg border border-slate-200 bg-white p-6 text-center shadow-sm dark:border-gray-700 dark:bg-gray-900 sm:p-8">
         <h1 className="text-2xl font-semibold tracking-tight dark:text-gray-100">
           This form is not available
@@ -63,7 +66,10 @@ export default async function PublicFormSuccessPage({
   }
 
   return (
-    <main className="min-h-screen bg-slate-50 px-4 py-10 text-slate-950 dark:bg-gray-950 dark:text-gray-100 sm:py-16">
+    <main
+      id="main-content"
+      className="min-h-screen bg-slate-50 px-4 py-10 text-slate-950 dark:bg-gray-950 dark:text-gray-100 sm:py-16"
+    >
       <section className="animate-fadeUp mx-auto w-full max-w-xl rounded-lg border border-slate-200 bg-white p-6 text-center shadow-sm dark:border-gray-700 dark:bg-gray-900 sm:p-8">
         <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300">
           <CheckCircle2 aria-hidden="true" className="h-6 w-6" />

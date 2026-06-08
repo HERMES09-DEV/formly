@@ -91,8 +91,8 @@ export default function TermsPage() {
 
       <h2>Contact</h2>
       <p>
-        <a href="mailto:gallendezmiguel@gmail.com">
-          gallendezmiguel@gmail.com
+        <a href="hermescollective@googlegroups.com">
+          hermescollective@googlegroups.com
         </a>
       </p>
     </article>
